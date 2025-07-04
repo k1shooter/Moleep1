@@ -19,20 +19,21 @@ class HomeViewModel : ViewModel() {
     val itemList: LiveData<MutableList<list_item>> = _itemList
 
     fun addItem(item: list_item) {
-        val currentList = _itemList.value ?: ArrayList()
-        currentList.add(item)
-        _itemList.value = currentList
+        // 기존 리스트를 복사하여 새로운 리스트를 만듦
+        val newList = _itemList.value.orEmpty().toMutableList()
+        newList.add(item)
+        _itemList.value = newList // 새 리스트를 할당
     }
 
     fun updateItem(position: Int, newItem: list_item) {
-        val currentList = _itemList.value ?: return
+        val currentList = _itemList.value.orEmpty().toMutableList()
         if (position in currentList.indices) {
             currentList[position] = newItem
-            _itemList.value = currentList.toMutableList()
+            _itemList.value = currentList // 새 리스트를 할당
         }
     }
 
-    fun setList(newList: ArrayList<list_item>) {
+    fun setList(newList: List<list_item>) {
         _itemList.value = newList.toMutableList()
     }
 }
