@@ -5,7 +5,10 @@ import android.os.Bundle;
 import androidx.appcompat.app.AppCompatActivity;
 
 import java.io.Serializable;
+import android.os.Parcelable;
+import kotlinx.parcelize.Parcelize;
 
+@Parcelize
 public class list_item extends AppCompatActivity implements Serializable {
     public String name;
     public String desc;
