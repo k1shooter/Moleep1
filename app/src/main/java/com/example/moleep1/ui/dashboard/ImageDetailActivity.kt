@@ -38,8 +38,13 @@ class ImageDetailActivity : AppCompatActivity() {
             if (imageUris.isNotEmpty()) {
                 val deletedPosition = binding.imageViewPager.currentItem
                 imageUris.removeAt(deletedPosition)
-                // 변경된 리스트를 결과로 설정하고 액티비티 종료
-                setResultAndFinish()
+                if (imageUris.isEmpty()) {
+                    setResultAndFinish()
+                }
+                else{
+                    binding.imageViewPager.adapter?.notifyItemRemoved(deletedPosition)
+                    binding.imageViewPager.adapter?.notifyItemRangeChanged(deletedPosition, imageUris.size)
+                }
             }
         }
 
