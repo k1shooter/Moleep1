@@ -16,6 +16,13 @@ android {
     compileSdk = 35
 
     defaultConfig {
+        ndk {
+            abiFilters.add("arm64-v8a")
+            abiFilters.add("armeabi-v7a")
+            abiFilters.add("x86")
+            abiFilters.add("x86_64")
+        }
+
         applicationId = "com.example.moleep1"
         minSdk = 26
         targetSdk = 35
@@ -24,6 +31,8 @@ android {
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         buildConfigField("String", "KAKAO_MAP_KEY", "\"${properties.getProperty("KAKAO_MAP_KEY")}\"")
+
+
     }
 
     buildTypes {
@@ -61,5 +70,5 @@ dependencies {
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
-    implementation("com.kakao.maps.open:android:2.9.5")
+    implementation(libs.kakao.map)
 }
