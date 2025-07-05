@@ -44,9 +44,14 @@ public class ListViewAdapter extends BaseAdapter {
         TextView titleTextView = (TextView) view.findViewById(R.id.textView1);
         TextView descTextView = (TextView) view.findViewById(R.id.textView2);
 
+        ImageView imageView = view.findViewById(R.id.imageView1);
+        list_item item = list.get(position);
         titleTextView.setText(list.get(position).getName());
         descTextView.setText(list.get(position).getDesc());
 
+        String imageUriStr = item.getImageUri();
+        Uri uri = Uri.parse(imageUriStr);
+        imageView.setImageURI(uri);
         return view;
     }
 

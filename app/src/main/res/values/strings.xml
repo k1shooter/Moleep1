@@ -6,5 +6,6 @@
     <string name="title_added">Added</string>
     <string name="gallery_image">Gallery image</string>
     <string name="add_image">add image</string>
+    <string name="add_profile">add profile</string>
     <string name="delete_image">delete image</string>
 </resources>

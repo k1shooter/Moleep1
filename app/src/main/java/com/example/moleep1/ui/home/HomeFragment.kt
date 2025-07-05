@@ -8,6 +8,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ArrayAdapter
+import android.widget.Button
 import android.widget.ListView
 import android.widget.TextView
 import androidx.fragment.app.Fragment
@@ -58,15 +59,21 @@ class HomeFragment : Fragment() {
             }
         }
 
+        val uriString = "android.resource://${requireContext().packageName}/${R.drawable.profile}"
         // 4. 초기 데이터 추가 (테스트용)
         // 이 로직은 보통 ViewModel의 init 블록에 두는 것이 더 좋습니다.
         if (homeViewModel.itemList.value.isNullOrEmpty()) {
-            val uriString = "android.resource://${requireContext().packageName}/${R.drawable.profile}"
+
             val initialData = listOf(
                 list_item("a", "b", uriString),
                 list_item("c", "d", uriString)
             )
             homeViewModel.setList(initialData)
+        }
+
+        binding.addprofilebutton.setOnClickListener {
+            homeViewModel.addItem(list_item("추가된 사람", "히히히", uriString))
+            binding.listView.smoothScrollToPosition(adapter.count - 1)
         }
 
         return root
