@@ -78,6 +78,23 @@ class AddedFragment : Fragment() {
                 binding.btnAddPinMode.text = "Pin"
             }
         }
+        binding.btnCapture.setOnClickListener {
+            // MapCaptureHelper 인스턴스 생성
+            val captureHelper = MapCaptureHelper()
+            // 캡처 함수 호출
+            captureHelper.captureMapAndSaveToGallery(requireContext(), mapView) { isSuccess, uri ->
+                // 캡처 완료 후 결과에 따라 Toast 메시지 표시
+                // MapCaptureHelper 내부에서도 Toast를 보여주므로 이 부분은 생략하거나 로그로 대체해도 됩니다.
+                activity?.runOnUiThread {
+                    if (isSuccess) {
+                        Log.d("AddedFragment", "캡처 성공. 이미지 Uri: $uri")
+                        Toast.makeText(context, "캡처 완료.", Toast.LENGTH_SHORT).show()
+                    } else {
+                        Log.e("AddedFragment", "캡처 실패.")
+                    }
+                }
+            }
+        }
     }
 
     private val mapLifeCycleCallback = object : MapLifeCycleCallback() {

@@ -1,4 +1,4 @@
-// ImageUtils.kt
+// com/example/moleep1/ui/added/ImageUtils.kt
 
 package com.example.moleep1.ui.added
 
@@ -10,9 +10,6 @@ import android.provider.MediaStore
 
 object ImageUtils {
 
-    /**
-     * Uri를 Bitmap으로 변환합니다.
-     */
     fun uriToBitmap(context: Context, uri: Uri): Bitmap? {
         return try {
             val sourceBitmap = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
@@ -20,7 +17,6 @@ object ImageUtils {
             } else {
                 MediaStore.Images.Media.getBitmap(context.contentResolver, uri)
             }
-            // ❗ [수정] 하드웨어 비트맵을 수정 가능한 소프트웨어 비트맵으로 복사하여 반환
             sourceBitmap.copy(Bitmap.Config.ARGB_8888, true)
         } catch (e: Exception) {
             e.printStackTrace()
@@ -29,25 +25,33 @@ object ImageUtils {
     }
 
     /**
-     * Bitmap 이미지를 원형으로 자릅니다.
+     * [수정] Bitmap 이미지를 중앙 기준으로 정사각형으로 먼저 자른 후, 원형으로 만듭니다.
      */
     fun cropToCircle(bitmap: Bitmap): Bitmap {
-        val output = Bitmap.createBitmap(bitmap.width, bitmap.height, Bitmap.Config.ARGB_8888)
+        // 1. 이미지를 정사각형으로 먼저 자르기
+        val squareBitmap = if (bitmap.width == bitmap.height) {
+            bitmap
+        } else {
+            val size = minOf(bitmap.width, bitmap.height)
+            val x = (bitmap.width - size) / 2
+            val y = (bitmap.height - size) / 2
+            Bitmap.createBitmap(bitmap, x, y, size, size)
+        }
+
+        // 2. 정사각형 비트맵을 원형으로 만들기
+        val output = Bitmap.createBitmap(squareBitmap.width, squareBitmap.height, Bitmap.Config.ARGB_8888)
         val canvas = Canvas(output)
         val paint = Paint()
-        val rect = Rect(0, 0, bitmap.width, bitmap.height)
+        val rect = Rect(0, 0, squareBitmap.width, squareBitmap.height)
 
         paint.isAntiAlias = true
         canvas.drawARGB(0, 0, 0, 0)
-        canvas.drawCircle(bitmap.width / 2f, bitmap.height / 2f, bitmap.width / 2f, paint)
+        canvas.drawCircle(squareBitmap.width / 2f, squareBitmap.height / 2f, squareBitmap.width / 2f, paint)
         paint.xfermode = PorterDuffXfermode(PorterDuff.Mode.SRC_IN)
-        canvas.drawBitmap(bitmap, rect, rect, paint)
+        canvas.drawBitmap(squareBitmap, rect, rect, paint)
         return output
     }
 
-    /**
-     * Bitmap 이미지의 크기를 조절합니다.
-     */
     fun resizeBitmap(bitmap: Bitmap, width: Int, height: Int): Bitmap {
         return Bitmap.createScaledBitmap(bitmap, width, height, false)
     }
