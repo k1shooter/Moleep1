@@ -1,8 +1,6 @@
 package com.example.moleep1.ui.added
 
-import android.Manifest
-import android.content.Context
-import android.content.pm.PackageManager
+import android.net.Uri
 import android.os.Bundle
 import android.util.Log
 import android.view.LayoutInflater
@@ -10,17 +8,12 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import com.example.moleep1.databinding.FragmentAddedBinding
-import com.google.android.gms.location.FusedLocationProviderClient
-import com.google.android.gms.location.LocationServices
 import com.kakao.vectormap.KakaoMap
 import com.kakao.vectormap.KakaoMapReadyCallback
-import com.kakao.vectormap.LatLng
 import com.kakao.vectormap.MapLifeCycleCallback
 import com.kakao.vectormap.MapView
-import com.kakao.vectormap.camera.CameraUpdateFactory
 
 class AddedFragment : Fragment() {
 
@@ -28,27 +21,20 @@ class AddedFragment : Fragment() {
     private val binding get() = _binding!!
 
     private lateinit var mapView: MapView
-    private var kakaoMap: KakaoMap? = null
+    private var mapPinManager: MapPinManager? = null
+    private lateinit var locationHandler: LocationHandler
 
-    // ✅ 위치 정보 클라이언트
-    private lateinit var fusedLocationClient: FusedLocationProviderClient
+    // Fragment의 핀 추가 모드 상태 변수 제거
 
-    // ✅ 권한 요청 런처
-    private val locationPermissionRequest = registerForActivityResult(
-        ActivityResultContracts.RequestMultiplePermissions()
-    ) { permissions ->
-        if (permissions.getOrDefault(Manifest.permission.ACCESS_FINE_LOCATION, false) ||
-            permissions.getOrDefault(Manifest.permission.ACCESS_COARSE_LOCATION, false)) {
-            // 권한이 허용되면 현위치 탐색
-            fetchCurrentLocation(true)
-        } else {
-            Toast.makeText(requireContext(), "위치 권한이 필요합니다.", Toast.LENGTH_SHORT).show()
+    private val pickImageLauncher = registerForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
+        uri?.let {
+            Toast.makeText(requireContext(), "사진이 선택되었습니다.", Toast.LENGTH_SHORT).show()
         }
     }
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
         _binding = FragmentAddedBinding.inflate(inflater, container, false)
-        fusedLocationClient = LocationServices.getFusedLocationProviderClient(requireActivity())
+        locationHandler = LocationHandler(this)
         return binding.root
     }
 
@@ -56,9 +42,38 @@ class AddedFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
         mapView = binding.mapView
         mapView.start(mapLifeCycleCallback, mapReadyCallback)
+        setupUIListeners()
+    }
 
+    private fun setupUIListeners() {
+        // 현재 위치 버튼 클릭
         binding.fabCurrentLocation.setOnClickListener {
-            fetchCurrentLocation(true)
+            binding.progressBar.visibility = View.VISIBLE
+            locationHandler.requestCurrentLocation(
+                onSuccess = { latLng ->
+                    binding.progressBar.visibility = View.GONE
+                    mapPinManager?.moveCamera(latLng)
+                },
+                onFailure = {
+                    binding.progressBar.visibility = View.GONE
+                }
+            )
+        }
+
+        // [수정] 핀 추가 모드 버튼 클릭
+        binding.btnAddPinMode.setOnClickListener {
+            // 현재 버튼 텍스트를 기준으로 모드 토글
+            val isEnteringPinMode = (binding.btnAddPinMode.text == "Pin")
+
+            // MapPinManager에 모드 변경 알림
+            mapPinManager?.setPinAddMode(isEnteringPinMode)
+
+            if (isEnteringPinMode) {
+                Toast.makeText(requireContext(), "핀을 추가할 위치를 지도에서 선택하세요.", Toast.LENGTH_SHORT).show()
+                binding.btnAddPinMode.text = "Cancel"
+            } else {
+                binding.btnAddPinMode.text = "Pin"
+            }
         }
     }
 
@@ -68,79 +83,35 @@ class AddedFragment : Fragment() {
     }
 
     private val mapReadyCallback = object : KakaoMapReadyCallback() {
-        override fun onMapReady(map: KakaoMap) {
-            kakaoMap = map
+        override fun onMapReady(kakaoMap: KakaoMap) {
             Log.d("KakaoMap", "Map is ready")
-            // ✅ 마지막 위치 복원 시도
-            if (!loadLastLocation()) {
-                // 저장된 위치가 없으면 현위치 탐색
-                fetchCurrentLocation(true)
-            }
-        }
-    }
 
-    // ✅ 현위치 탐색 함수
-    private fun fetchCurrentLocation(moveToCamera: Boolean) {
-        if (ContextCompat.checkSelfPermission(requireContext(), Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED &&
-            ContextCompat.checkSelfPermission(requireContext(), Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-            locationPermissionRequest.launch(arrayOf(
-                Manifest.permission.ACCESS_FINE_LOCATION,
-                Manifest.permission.ACCESS_COARSE_LOCATION
-            ))
-            return
-        }
-
-        binding.progressBar.visibility = View.VISIBLE
-        fusedLocationClient.lastLocation.addOnSuccessListener { location ->
-            binding.progressBar.visibility = View.GONE
-            location?.let {
-                if (moveToCamera) {
-                    val currentLatLng = LatLng.from(it.latitude, it.longitude)
-                    kakaoMap?.moveCamera(CameraUpdateFactory.newCenterPosition(currentLatLng, 15))
+            // [수정] MapPinManager 초기화 및 콜백 리스너 설정
+            mapPinManager = MapPinManager(requireContext(), kakaoMap).apply {
+                // 1. 핀이 클릭되었을 때 실행될 동작 정의
+                onPinClickListener = {
+                    pickImageLauncher.launch("image/*")
                 }
-            } ?: Toast.makeText(requireContext(), "위치를 찾을 수 없습니다. GPS를 확인해주세요.", Toast.LENGTH_SHORT).show()
-        }.addOnFailureListener {
-            binding.progressBar.visibility = View.GONE
-            Toast.makeText(requireContext(), "위치 탐색에 실패했습니다.", Toast.LENGTH_SHORT).show()
-        }
-    }
-
-    // ✅ 마지막 위치 저장 함수
-    private fun saveLastLocation() {
-        // kakaoMap이 null이 아니면 let 블록 실행
-        kakaoMap?.let { map ->
-            val sharedPref = activity?.getPreferences(Context.MODE_PRIVATE) ?: return
-
-            // ★★★ 이 부분 수정 ★★★
-            // map.cameraPosition이 null이 아닐 때만 let 블록 실행
-            map.cameraPosition?.let { cameraPosition ->
-                with(sharedPref.edit()) {
-                    putFloat("last_lat", cameraPosition.position.latitude.toFloat())
-                    putFloat("last_lng", cameraPosition.position.longitude.toFloat())
-                    putFloat("last_zoom", cameraPosition.zoomLevel.toFloat())
-                    apply()
+                // 2. 핀이 지도에 새로 추가되었을 때 실행될 동작 정의
+                onPinAddedListener = {
+                    binding.btnAddPinMode.text = "Pin"
+                    Toast.makeText(requireContext(), "핀이 추가되었습니다.", Toast.LENGTH_SHORT).show()
                 }
             }
+
+            // [삭제] Fragment에 있던 지도 클릭 리스너 로직 제거
+            // kakaoMap.setOnMapClickListener { ... }
+
+            // 마지막 위치 불러오기 시도, 실패하면 현재 위치 요청
+            if (mapPinManager?.loadLastLocation() == false) {
+                binding.fabCurrentLocation.performClick()
+            }
         }
-    }
-
-    // ✅ 마지막 위치 복원 함수
-    private fun loadLastLocation(): Boolean {
-        val sharedPref = activity?.getPreferences(Context.MODE_PRIVATE) ?: return false
-        if (!sharedPref.contains("last_lat")) return false
-
-        val lat = sharedPref.getFloat("last_lat", 0f).toDouble()
-        val lng = sharedPref.getFloat("last_lng", 0f).toDouble()
-        val zoom = sharedPref.getFloat("last_zoom", 15f)
-
-        val lastPosition = LatLng.from(lat, lng)
-        kakaoMap?.moveCamera(CameraUpdateFactory.newCenterPosition(lastPosition, zoom.toInt()))
-        return true
     }
 
     override fun onPause() {
         super.onPause()
-        saveLastLocation() // ✅ 화면을 벗어날 때 마지막 위치 저장
+        mapPinManager?.saveLastLocation()
         mapView.pause()
     }
 
