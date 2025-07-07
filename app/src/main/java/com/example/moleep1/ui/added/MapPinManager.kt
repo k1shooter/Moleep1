@@ -67,13 +67,14 @@ class MapPinManager(private val context: Context, private val kakaoMap: KakaoMap
     }
 
     fun addPhotoBadgeToLabel(label: Label, imageUri: Uri) {
+        label.removeAllBadge()
+
         val sourceBitmap = ImageUtils.uriToBitmap(context, imageUri) ?: return
         val croppedBitmap = ImageUtils.cropToCircle(sourceBitmap)
         val finalBitmap = ImageUtils.resizeBitmap(croppedBitmap, 60, 60)
 
-        // ❗ [수정] setOffset을 추가하여 배지 위치를 핀 중앙으로 조정
         val badgeOptions = BadgeOptions.from(finalBitmap)
-            .setOffset(0.5f, 0.4f) // x축 중앙(0.5), y축 살짝 위(0.4)
+            .setOffset(0.5f, 0.4f)
 
         val badgeList = label.addBadge(badgeOptions)
         badgeList[0].show()
