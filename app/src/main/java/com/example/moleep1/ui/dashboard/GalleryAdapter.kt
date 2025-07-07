@@ -47,4 +47,10 @@ class GalleryAdapter(
         imageUris.add(imageUri)
         notifyItemInserted(imageUris.size - 1)
     }
+
+    fun updateList(newList: List<Uri>) {
+        imageUris.clear()
+        imageUris.addAll(newList)
+        notifyDataSetChanged()
+    }
 }

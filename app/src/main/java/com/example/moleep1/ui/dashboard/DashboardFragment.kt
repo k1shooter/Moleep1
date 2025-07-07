@@ -13,37 +13,35 @@ import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.GridLayoutManager
 import com.example.moleep1.R
 import com.example.moleep1.databinding.FragmentDashboardBinding
+import androidx.fragment.app.viewModels
 
 class DashboardFragment : Fragment() {
 
     private var _binding: FragmentDashboardBinding? = null
     private val binding get() = _binding!!
 
+    // ✅ ViewModel 인스턴스 생성. 이제 데이터는 ViewModel이 관리합니다.
+    private val viewModel: DashboardViewModel by viewModels()
     private lateinit var adapter: GalleryAdapter
-    // ✅ 모든 이미지 경로를 Uri 타입으로 관리할 리스트
-    private val imageList = mutableListOf<Uri>()
 
-    // 갤러리에서 이미지를 선택하고 그 결과(Uri)를 받아오는 런처
-    private val pickImageLauncher =
-        registerForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
-            uri?.let {
-                // 갤러리에서 이미지를 성공적으로 선택하면 리스트에 추가하고, 어댑터에 알림
-                adapter.addImage(it)
-            }
-        }
-
+    // ... ActivityResultLauncher들은 그대로 ...
     private val detailActivityLauncher =
         registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
             if (result.resultCode == Activity.RESULT_OK) {
-                // ImageDetailActivity에서 보낸 업데이트된 Uri 리스트를 받음
                 val updatedUris = result.data?.getParcelableArrayListExtra<Uri>("updated_uris")
                 updatedUris?.let {
-                    // 기존 리스트를 지우고 새 리스트로 교체
-                    imageList.clear()
-                    imageList.addAll(it)
-                    // 어댑터에 전체 데이터가 변경되었음을 알림
-                    adapter.notifyDataSetChanged()
+                    // ✅ ViewModel의 데이터를 업데이트
+                    viewModel.setList(it)
                 }
+            }
+        }
+
+    // ... pickImageLauncher도 ViewModel을 사용하도록 수정
+    private val pickImageLauncher =
+        registerForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
+            uri?.let {
+                // ✅ ViewModel의 데이터를 업데이트
+                viewModel.addImage(it)
             }
         }
 
@@ -53,8 +51,8 @@ class DashboardFragment : Fragment() {
     ): View {
         _binding = FragmentDashboardBinding.inflate(inflater, container, false)
 
-        // ⭐️ 중요: 처음에 보여줄 기본 이미지들을 Uri로 변환하여 리스트에 미리 추가
-        if (imageList.isEmpty()) { // 중복 추가 방지
+        // 초기 데이터 추가 로직은 ViewModel로 옮기는 것이 더 좋지만, 우선 이렇게 유지
+        if (viewModel.imageList.value.isNullOrEmpty()) {
             addInitialDrawablesAsUris()
         }
 
@@ -64,11 +62,12 @@ class DashboardFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        // ✅ 2. 어댑터 생성 시 클릭 이벤트 처리 로직을 전달
-        adapter = GalleryAdapter(imageList) { position ->
-            // 아이템 클릭 시 ImageDetailActivity 실행
+        // ✅ 어댑터는 ViewModel의 데이터를 관찰하여 업데이트
+        //    처음엔 빈 리스트로 어댑터를 생성
+        adapter = GalleryAdapter(mutableListOf()) { position ->
             val intent = Intent(requireContext(), ImageDetailActivity::class.java).apply {
-                putParcelableArrayListExtra("uris", ArrayList(imageList))
+                // ✅ ViewModel의 현재 데이터로 Intent를 구성
+                putParcelableArrayListExtra("uris", ArrayList(viewModel.imageList.value ?: listOf()))
                 putExtra("position", position)
             }
             detailActivityLauncher.launch(intent)
@@ -77,26 +76,28 @@ class DashboardFragment : Fragment() {
         binding.galleryRecyclerView.layoutManager = GridLayoutManager(requireContext(), 3)
         binding.galleryRecyclerView.adapter = adapter
 
+        // ✅ LiveData 관찰 설정
+        // ViewModel의 imageList가 변경될 때마다 이 코드가 실행되어 화면을 갱신
+        viewModel.imageList.observe(viewLifecycleOwner) { list ->
+            // 어댑터에 새 데이터를 전달하고, 뷰를 갱신
+            adapter.updateList(list) // 어댑터에 데이터 업데이트용 함수를 만들어야 함
+        }
+
         binding.addImageButton.setOnClickListener {
             pickImageLauncher.launch("image/*")
         }
     }
 
-    /**
-     * ⭐️ 기존 Drawable 리소스 ID들을 Uri로 변환하여 imageList에 추가하는 함수
-     */
     private fun addInitialDrawablesAsUris() {
-        val initialDrawableIds = listOf(
-            R.drawable.pic4, R.drawable.pic5, R.drawable.pic6
-        )
-
+        val initialDrawableIds = listOf(R.drawable.pic4, R.drawable.pic5, R.drawable.pic6)
+        val uriList = mutableListOf<Uri>()
         initialDrawableIds.forEach { resId ->
-            // 리소스 ID로부터 Uri를 생성하는 방법
             val uri = "android.resource://${requireContext().packageName}/$resId".toUri()
-            imageList.add(uri)
+            uriList.add(uri)
         }
+        // ✅ ViewModel의 데이터를 업데이트
+        viewModel.setList(uriList)
     }
-
 
     override fun onDestroyView() {
         super.onDestroyView()
