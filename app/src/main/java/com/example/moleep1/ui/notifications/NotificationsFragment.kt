@@ -70,7 +70,7 @@ class NotificationsFragment : Fragment() {
         btnAddText.setOnClickListener {
             val editText= EditText(requireContext())
             AlertDialog.Builder(requireContext())
-                .setTitle("프로필 정보")
+                .setTitle("텍스트 추가")
                 .setView(editText)
                 .setPositiveButton("추가") { _, _ ->
                     // 다음 터치 위치에 텍스트박스 추가 대기
@@ -201,6 +201,10 @@ class NotificationsFragment : Fragment() {
         Eraserbutton.setOnClickListener{
             viewModel.setColor(Color.WHITE)
             viewModel.setStrokeWidth(40f)
+            if(drawingView.isPanMode){
+                drawingView.isPanMode=!drawingView.isPanMode
+                panModeButton.text = if (drawingView.isPanMode) "M" else "D"
+            }
             drawingView.setPaintStyle(Color.WHITE,viewModel.currentStrokeWidth)
         }
 
@@ -218,6 +222,16 @@ class NotificationsFragment : Fragment() {
             drawingView.placedTexts=placedTexts
             drawingView.invalidate()
         }
+
+        viewModel.offsetX.observe(viewLifecycleOwner){offsetX ->
+            drawingView.offsetX=offsetX
+            drawingView.invalidate()
+        }
+        viewModel.offsetY.observe(viewLifecycleOwner){offsetY ->
+            drawingView.offsetY=offsetY
+            drawingView.invalidate()
+        }
+
         return binding.root
     }
 

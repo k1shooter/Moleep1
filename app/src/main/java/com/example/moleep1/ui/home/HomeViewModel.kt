@@ -45,7 +45,21 @@ class HomeViewModel : ViewModel() {
         viewedItem.value = currentList[position]
     }
 
+    fun selectItemById(id : String?) {
+        val currentList = _itemList.value.orEmpty().toMutableList()
+        val found = currentList.find { it.id == id }
+        viewedItem.value = found
+    }
+
     fun setList(newList: List<list_item>) {
         _itemList.value = newList.toMutableList()
+    }
+
+    fun removeItem(position: Int) {
+        val currentList = _itemList.value?.toMutableList() ?: return
+        if (position in currentList.indices) {
+            currentList.removeAt(position)
+            _itemList.value = currentList
+        }
     }
 }

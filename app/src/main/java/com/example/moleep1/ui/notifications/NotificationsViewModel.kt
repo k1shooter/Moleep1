@@ -26,6 +26,22 @@ class NotificationsViewModel : ViewModel() {
 
     val strokes = MutableLiveData<MutableList<Stroke>>(mutableListOf())
     val placedImages = MutableLiveData<MutableList<PlacedImage>>(mutableListOf())
+
+
+    val offsetX = MutableLiveData(0f)
+    val offsetY = MutableLiveData(0f)
+    val scaleFactor = MutableLiveData(1f)
+
+    fun setOffset(x: Float, y: Float) {
+        offsetX.value = x
+        offsetY.value = y
+    }
+
+    fun setScale(factor: Float) {
+        scaleFactor.value = factor
+    }
+
+
     var currentColor: Int=0xFF000000.toInt()
     var currentStrokeWidth: Float=8f
 

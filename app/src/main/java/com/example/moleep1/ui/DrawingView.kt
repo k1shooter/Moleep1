@@ -30,12 +30,20 @@ class DrawingView(context: Context, attrs: AttributeSet?) : View(context,attrs) 
 
     private var pendingImage: Bitmap? = null
     private var pendingPosition: Int = 0
+    private var pendingId: String? = null
     private var pendingImageWidth = 200
     private var pendingImageHeight = 200
     private var isPlacingImage = false
 
     var pendingText: String? = null
     var isPlacingText = false
+
+    var onPanZoomChanged: ((Float, Float, Float) -> Unit)? = null
+
+    // 패닝/줌 값이 바뀔 때 호출
+    private fun notifyPanZoomChanged() {
+        onPanZoomChanged?.invoke(offsetX, offsetY, scaleFactor)
+    }
 
     fun uriToBitmap(context: Context, uriString: String): Bitmap? {
         val uri = Uri.parse(uriString)
@@ -101,7 +109,7 @@ class DrawingView(context: Context, attrs: AttributeSet?) : View(context,attrs) 
     private var currentPaintColor: Int=0xFF000000.toInt()
     private var currentStrokeWidth: Float=8f
 
-    private var scaleFactor = 1.0f
+    var scaleFactor = 1.0f
     private val scaleGestureDetector = ScaleGestureDetector(context, object : ScaleGestureDetector.SimpleOnScaleGestureListener(){
         override fun onScale(detector: ScaleGestureDetector): Boolean {
             scaleFactor*=detector.scaleFactor
@@ -112,14 +120,16 @@ class DrawingView(context: Context, attrs: AttributeSet?) : View(context,attrs) 
     })
     //핀치 줌
 
-    private var offsetX = 0f
-    private var offsetY = 0f
+    var offsetX = 0f
+    var offsetY = 0f
     private var lastPanX = 0f
     private var lastPanY = 0f
     private var isPanning = false
     //패닝
 
     var isPanMode = false
+
+
 
     fun setPaintStyle(color: Int, strokeWidth: Float){
         currentPaintColor=color
@@ -142,10 +152,10 @@ class DrawingView(context: Context, attrs: AttributeSet?) : View(context,attrs) 
 //        for (img in placedImages) {
 //            canvas.drawBitmap(img.bitmap, img.x, img.y, null)
 //        }
-        pendingImage?.let {
-            // 예: 화면 중앙에 미리 보여주기 (옵션)
-            canvas.drawBitmap(it, (width - it.width)/2f, (height - it.height)/2f, null)
-        }
+//        pendingImage?.let {
+//            // 예: 화면 중앙에 미리 보여주기 (옵션)
+//            canvas.drawBitmap(it, (width - it.width)/2f, (height - it.height)/2f, null)
+//        }
 
         for ((i, img) in placedImages.withIndex()) {
             val w = img.width.coerceAtLeast(10)
@@ -236,7 +246,6 @@ class DrawingView(context: Context, attrs: AttributeSet?) : View(context,attrs) 
                 pendingText = null
                 isPlacingText = false
                 invalidate()
-                return true
             }
 
 
@@ -265,7 +274,8 @@ class DrawingView(context: Context, attrs: AttributeSet?) : View(context,attrs) 
                 pendingImage = null
                 isPlacingImage = false
                 invalidate()
-                return true // 드로잉 등 다른 동작 방지
+
+
             }
 
             scaleGestureDetector.onTouchEvent(event)
@@ -286,8 +296,11 @@ class DrawingView(context: Context, attrs: AttributeSet?) : View(context,attrs) 
                         offsetY +=dy*sensitivity
                         lastPanX = event.x
                         lastPanY = event.y
+                        notifyPanZoomChanged()
                         invalidate()
+                        return true
                     }
+
                 }
 
                 if (event.action == MotionEvent.ACTION_DOWN) {
