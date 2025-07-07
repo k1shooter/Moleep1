@@ -1,3 +1,4 @@
+import org.gradle.kotlin.dsl.implementation
 import java.util.Properties
 import java.io.FileInputStream
 
@@ -6,6 +7,7 @@ plugins {
     alias(libs.plugins.kotlin.android)
     id("kotlin-parcelize")
     id("kotlin-kapt")
+    //id("org.jetbrains.kotlin.kapt")
 }
 
 val properties = Properties().apply {
@@ -68,6 +70,8 @@ dependencies {
     implementation(libs.androidx.lifecycle.viewmodel.ktx)
     implementation(libs.androidx.navigation.fragment.ktx)
     implementation(libs.androidx.navigation.ui.ktx)
+    implementation(libs.androidx.room.common.jvm)
+    implementation(libs.androidx.room.runtime.jvm)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
@@ -76,4 +80,8 @@ dependencies {
     kapt("com.github.bumptech.glide:compiler:4.16.0")
     implementation(libs.kakao.map)
     implementation(libs.play.services.location)
+    //implementation("androidx.room:room-runtime:2.5.2")
+    //annotationProcessor("androidx.room:room-compiler:2.5.2")
+    //implementation("androidx.room:room-ktx:2.5.2")
+    //kapt("androidx.room:room-compiler:2.5.2")
 }

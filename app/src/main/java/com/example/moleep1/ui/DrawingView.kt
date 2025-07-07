@@ -20,7 +20,9 @@ import android.net.Uri
 import android.os.Build
 import android.provider.MediaStore
 import com.example.moleep1.ui.notifications.PlacedText
-
+import java.io.File
+import java.io.FileOutputStream
+import java.io.IOException
 class DrawingView(context: Context, attrs: AttributeSet?) : View(context,attrs) {
 
 
@@ -39,6 +41,45 @@ class DrawingView(context: Context, attrs: AttributeSet?) : View(context,attrs) 
     var isPlacingText = false
 
     var onPanZoomChanged: ((Float, Float, Float) -> Unit)? = null
+
+    fun clearCanvas() {
+        placedImages.clear()
+        placedTexts.clear()
+        strokes = emptyList()
+        pendingImage = null // 선택된 이미지도 해제
+        invalidate()
+    }
+
+    fun getBitmapFromView(view: View): Bitmap {
+        val bitmap = Bitmap.createBitmap(view.width, view.height, Bitmap.Config.ARGB_8888)
+        val canvas = Canvas(bitmap)
+        view.draw(canvas)
+        return bitmap
+    }
+    fun saveBitmapToFile(context: Context, bitmap: Bitmap, fileName: String): Boolean {
+        return try {
+            val file = File(context.getExternalFilesDir(null), fileName)
+            val outputStream = FileOutputStream(file)
+            bitmap.compress(Bitmap.CompressFormat.PNG, 100, outputStream)
+            outputStream.flush()
+            outputStream.close()
+            true
+        } catch (e: IOException) {
+            e.printStackTrace()
+            false
+        }
+    }
+
+    fun saveBitmapToGallery(context: Context, bitmap: Bitmap, title: String): Boolean {
+        @Suppress("DEPRECATION")
+        val savedImageURL = MediaStore.Images.Media.insertImage(
+            context.contentResolver,
+            bitmap,
+            title,
+            "그림판에서 저장한 이미지"
+        )
+        return savedImageURL != null
+    }
 
     // 패닝/줌 값이 바뀔 때 호출
     private fun notifyPanZoomChanged() {

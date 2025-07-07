@@ -13,6 +13,7 @@ class HomeViewModel : ViewModel() {
     val text: LiveData<String> = _text
 
 
+
     private val _itemList = MutableLiveData<MutableList<list_item>>().apply {
         value = mutableListOf()
     }

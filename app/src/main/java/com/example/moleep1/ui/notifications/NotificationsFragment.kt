@@ -29,9 +29,19 @@ import android.os.Build
 import android.provider.MediaStore
 import android.widget.EditText
 import android.widget.SeekBar
+import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
+import androidx.core.app.ActivityCompat
+import android.Manifest
+import android.content.pm.PackageManager
+import android.widget.ImageButton
+import androidx.core.content.ContextCompat
+
+
 
 class NotificationsFragment : Fragment() {
+
+
 
     private val homeViewModel: HomeViewModel by activityViewModels()
     private lateinit var adapter: ListViewAdapter
@@ -47,8 +57,9 @@ class NotificationsFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         val drawerLayout=view.findViewById<DrawerLayout>(R.id.drawerLayout)
-        val btnOpenSidebar=view.findViewById<Button>(R.id.btnOpenSidebar)
-        val btnAddText=view.findViewById<Button>(R.id.btnAddText)
+        val btnOpenSidebar=view.findViewById<ImageButton>(R.id.btnOpenSidebar)
+        val btnClear=view.findViewById<ImageButton>(R.id.btnClear)
+        val btnAddText=view.findViewById<ImageButton>(R.id.btnAddText)
         val listView=view.findViewById<ListView>(R.id.listView)
         val drawingView=view.findViewById<DrawingView>(R.id.drawingView)
 
@@ -63,8 +74,36 @@ class NotificationsFragment : Fragment() {
         }
 
 
+        val btnSave = view.findViewById<ImageButton>(R.id.btnSave)
+
+        btnSave.setOnClickListener {
+            // 1. 권한 체크
+            if (ContextCompat.checkSelfPermission(requireContext(), Manifest.permission.WRITE_EXTERNAL_STORAGE)
+                != PackageManager.PERMISSION_GRANTED) {
+                // 2. 권한이 없으면 요청
+                ActivityCompat.requestPermissions(
+                    requireActivity(),
+                    arrayOf(Manifest.permission.WRITE_EXTERNAL_STORAGE),
+                    1001
+                )
+                return@setOnClickListener // 권한 허용 후 다시 시도하도록 종료
+            }
+
+            // 3. 권한이 있을 때만 저장 코드 실행
+            val bitmap = drawingView.getBitmapFromView(drawingView)
+            val success = drawingView.saveBitmapToGallery(requireContext(), bitmap, "drawing_${System.currentTimeMillis()}")
+            if (success) {
+                Toast.makeText(requireContext(), "갤러리에 저장 완료!", Toast.LENGTH_SHORT).show()
+            } else {
+                Toast.makeText(requireContext(), "저장 실패", Toast.LENGTH_SHORT).show()
+            }
+        }
         btnOpenSidebar.setOnClickListener {
             drawerLayout.openDrawer(GravityCompat.END)
+        }
+
+        btnClear.setOnClickListener {
+            drawingView.clearCanvas()
         }
 
         btnAddText.setOnClickListener {

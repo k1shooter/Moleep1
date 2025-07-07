@@ -26,20 +26,40 @@
             android:gravity="end">
 
             <!-- 색상 버튼 예시 -->
-            <Button
-                android:id="@+id/btnAddText"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="텍스트 추가"
-                android:layout_gravity="end|top"
+            <ImageButton
+                android:id="@+id/btnClear"
+                android:layout_width="65dp"
+                android:layout_height="45dp"
+                android:layout_weight="1"
+                android:src="@drawable/del"
+                android:layout_gravity="center|top"
                 android:layout_margin="8dp"/>
 
-            <Button
+            <ImageButton
+                android:id="@+id/btnSave"
+                android:layout_width="65dp"
+                android:layout_height="45dp"
+                android:layout_weight="1"
+                android:src="@drawable/sav"
+                android:layout_gravity="center|top"
+                android:layout_margin="8dp"/>
+
+            <ImageButton
+                android:id="@+id/btnAddText"
+                android:layout_width="65dp"
+                android:layout_height="45dp"
+                android:layout_weight="1"
+                android:src="@drawable/ttt"
+                android:layout_gravity="center|top"
+                android:layout_margin="8dp"/>
+
+            <ImageButton
                 android:id="@+id/btnOpenSidebar"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="프로필 목록"
-                android:layout_gravity="end|top"
+                android:layout_width="65dp"
+                android:layout_height="45dp"
+                android:layout_weight="1"
+                android:src="@drawable/peos"
+                android:layout_gravity="center|top"
                 android:layout_margin="8dp"/>
 
         </LinearLayout>
