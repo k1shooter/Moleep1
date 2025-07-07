@@ -10,6 +10,8 @@ import com.kakao.vectormap.label.LabelOptions
 import com.kakao.vectormap.label.LabelStyle
 import com.kakao.vectormap.label.LabelStyles
 import com.kakao.vectormap.label.LabelTextBuilder
+import com.kakao.vectormap.label.LabelTransition
+import com.kakao.vectormap.label.Transition
 
 class MapPinManager(private val context: Context, private val kakaoMap: KakaoMap) {
 
@@ -20,6 +22,10 @@ class MapPinManager(private val context: Context, private val kakaoMap: KakaoMap
     var onPinClickListener: (() -> Unit)? = null
     // 핀이 추가된 직후 외부(Fragment)에 알리기 위한 리스너
     var onPinAddedListener: ((LatLng) -> Unit)? = null
+
+    val styles = kakaoMap.labelManager!!.addLabelStyles(
+        LabelStyles.from(LabelStyle.from(R.drawable.pin_icon_128).setIconTransition(LabelTransition.from(Transition.Scale, Transition.Scale)))
+    )
 
     init {
         setupMapListeners()
@@ -55,31 +61,25 @@ class MapPinManager(private val context: Context, private val kakaoMap: KakaoMap
     /**
      * 지도에 핀(Label)을 추가합니다.
      */
+// MapPinManager.kt의 addPin 함수
+
     private fun addPin(position: LatLng) {
-        // ❗ 디버깅을 위해 함수 내용을 임시로 변경합니다.
         val manager = kakaoMap.labelManager ?: return
         val layer = manager.getLayer()
 
-        // ❗ 아이콘 없이 오직 파란색 텍스트만 있는 스타일로 강제 변경
-        val styles = manager.addLabelStyles(LabelStyles.from(
-            LabelStyle.from()
-                .setTextStyles(35, android.graphics.Color.BLUE, 2, android.graphics.Color.WHITE)
-        ))
+        // 원래의 아이콘 스타일을 사용하는 코드로 복구
 
-        // ❗ "테스트" 라는 글자를 라벨로 표시
         val options = LabelOptions.from(position)
             .setStyles(styles)
-            .setTexts(LabelTextBuilder().setTexts("test"))
-            .setRank(1) // 다른 객체에 가려지지 않도록 Rank를 1로 설정
+            .setRank(1) // 다른 객체에 가려지지 않도록 Rank 설정
 
         val newLabel = layer?.addLabel(options)
 
-        // 라벨이 실제로 추가되었는지 로그로 확인
         if (newLabel != null) {
-            Log.d("MapPinManager", "✅ 테스트 라벨 추가 성공! ID: ${newLabel.labelId}")
+            Log.d("MapPinManager", "✅ 아이콘 핀 추가 성공! ID: ${newLabel.labelId}")
             pinLabelIds.add(newLabel.labelId)
         } else {
-            Log.e("MapPinManager", "❌ 테스트 라벨 추가 실패!")
+            Log.e("MapPinManager", "❌ 아이콘 핀 추가 실패!")
         }
     }
 
