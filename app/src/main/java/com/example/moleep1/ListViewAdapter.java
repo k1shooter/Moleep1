@@ -34,8 +34,12 @@ public class ListViewAdapter extends BaseAdapter {
     }
 
     @Override
-    public Object getItem(int position) {
+    public list_item getItem(int position) {
         return list.get(position);
+    }
+
+    public int getPosition(list_item item) {
+        return list.indexOf(item);
     }
 
     @Override

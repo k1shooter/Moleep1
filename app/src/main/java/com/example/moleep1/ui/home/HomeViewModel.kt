@@ -18,6 +18,13 @@ class HomeViewModel : ViewModel() {
     }
     val itemList: LiveData<MutableList<list_item>> = _itemList
 
+    val selectedItem = MutableLiveData<list_item>()
+    val viewedItem = MutableLiveData<list_item>()
+
+    fun selectItem(item: list_item) {
+        selectedItem.value = item
+    }
+
     fun addItem(item: list_item) {
         // 기존 리스트를 복사하여 새로운 리스트를 만듦
         val newList = _itemList.value.orEmpty().toMutableList()
@@ -33,7 +40,13 @@ class HomeViewModel : ViewModel() {
         }
     }
 
+    fun selectItemByPosition(position: Int) {
+        val currentList = _itemList.value.orEmpty().toMutableList()
+        viewedItem.value = currentList[position]
+    }
+
     fun setList(newList: List<list_item>) {
+        selectedItem.value=null
         _itemList.value = newList.toMutableList()
     }
 }
