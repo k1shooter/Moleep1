@@ -19,16 +19,23 @@ import android.graphics.ImageDecoder
 import android.net.Uri
 import android.os.Build
 import android.provider.MediaStore
+import com.example.moleep1.ui.notifications.PlacedText
 
 class DrawingView(context: Context, attrs: AttributeSet?) : View(context,attrs) {
 
 
     var placedImages = mutableListOf<PlacedImage>()
+    var placedTexts = mutableListOf<PlacedText>()
+
+
     private var pendingImage: Bitmap? = null
     private var pendingPosition: Int = 0
     private var pendingImageWidth = 200
     private var pendingImageHeight = 200
     private var isPlacingImage = false
+
+    var pendingText: String? = null
+    var isPlacingText = false
 
     fun uriToBitmap(context: Context, uriString: String): Bitmap? {
         val uri = Uri.parse(uriString)
@@ -156,6 +163,15 @@ class DrawingView(context: Context, attrs: AttributeSet?) : View(context,attrs) 
             }
         }
 
+        for (txt in placedTexts) {
+            val paint = Paint().apply {
+                color = txt.color
+                textSize = txt.textSize
+                isAntiAlias = true
+            }
+            canvas.drawText(txt.text, txt.x, txt.y, paint)
+        }
+
         for(stroke in strokes){
             val paint = Paint().apply{
                 this.color = stroke.color
@@ -185,6 +201,43 @@ class DrawingView(context: Context, attrs: AttributeSet?) : View(context,attrs) 
 
     override fun onTouchEvent(event: MotionEvent?): Boolean {
         if (event != null) {
+
+            if (isPlacingText && pendingText != null && event.action == MotionEvent.ACTION_DOWN) {
+
+                // 1. 임시 Paint로 텍스트 폭, baseline 계산
+                val paint = Paint().apply {
+                    textSize = 40f // PlacedText에 저장할 크기와 동일하게!
+                    // color 등은 필요 없음
+                }
+                val textWidth = paint.measureText(pendingText!!)
+                val baselineOffset = -paint.ascent()
+                val textHeight = paint.descent() - paint.ascent()
+
+                // 2. 좌표 변환
+                val centerX = width / 2f
+                val centerY = height / 2f
+                val cx = centerX - offsetX
+                val cy = centerY - offsetY
+                val canvasX = (event.x - offsetX - cx) / scaleFactor + cx
+                val canvasY = (event.y - offsetY - cy) / scaleFactor + cy
+
+                // 3. 중앙 정렬 보정
+                val x = canvasX - textWidth / 2f
+                val y = canvasY + baselineOffset - textHeight / 2f
+
+                // 4. PlacedText에 저장
+                placedTexts.add(
+                    PlacedText(
+                        text = pendingText!!,
+                        x = x,
+                        y = y,
+                    )
+                )
+                pendingText = null
+                isPlacingText = false
+                invalidate()
+                return true
+            }
 
 
             if (isPlacingImage && pendingImage != null && event.action == MotionEvent.ACTION_DOWN) {

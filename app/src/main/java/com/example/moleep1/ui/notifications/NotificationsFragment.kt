@@ -27,6 +27,7 @@ import android.graphics.drawable.Drawable
 import android.net.Uri
 import android.os.Build
 import android.provider.MediaStore
+import android.widget.EditText
 import android.widget.SeekBar
 import androidx.appcompat.app.AlertDialog
 
@@ -47,6 +48,7 @@ class NotificationsFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         val drawerLayout=view.findViewById<DrawerLayout>(R.id.drawerLayout)
         val btnOpenSidebar=view.findViewById<Button>(R.id.btnOpenSidebar)
+        val btnAddText=view.findViewById<Button>(R.id.btnAddText)
         val listView=view.findViewById<ListView>(R.id.listView)
         val drawingView=view.findViewById<DrawingView>(R.id.drawingView)
 
@@ -63,6 +65,20 @@ class NotificationsFragment : Fragment() {
 
         btnOpenSidebar.setOnClickListener {
             drawerLayout.openDrawer(GravityCompat.END)
+        }
+
+        btnAddText.setOnClickListener {
+            val editText= EditText(requireContext())
+            AlertDialog.Builder(requireContext())
+                .setTitle("프로필 정보")
+                .setView(editText)
+                .setPositiveButton("추가") { _, _ ->
+                    // 다음 터치 위치에 텍스트박스 추가 대기
+                    drawingView.pendingText = editText.text.toString()
+                    drawingView.isPlacingText = true
+                }
+                .setNegativeButton("취소", null)
+                .show()
         }
 
         listView.setOnItemClickListener { _, _, position, _ ->
@@ -196,6 +212,10 @@ class NotificationsFragment : Fragment() {
         }
         viewModel.placedImages.observe(viewLifecycleOwner){placedImages ->
             drawingView.placedImages=placedImages
+            drawingView.invalidate()
+        }
+        viewModel.placedTexts.observe(viewLifecycleOwner){placedTexts ->
+            drawingView.placedTexts=placedTexts
             drawingView.invalidate()
         }
         return binding.root

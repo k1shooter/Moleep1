@@ -8,19 +8,46 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent">
 
-        <Button
-            android:id="@+id/btnOpenSidebar"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="프로필 목록"
-            android:layout_gravity="end|top"
-            android:layout_margin="16dp"/>
-
         <com.example.moleep1.ui.DrawingView
             android:id="@+id/drawingView"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:background="#FFFFFF" />
+
+        <LinearLayout
+            android:id="@+id/opbuttonPanel"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_gravity="end|top"
+            android:padding="0dp"
+            android:layout_marginTop="-10dp"
+            android:background="@android:color/transparent"
+            android:gravity="end">
+
+            <!-- 색상 버튼 예시 -->
+            <Button
+                android:id="@+id/btnAddText"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="텍스트 추가"
+                android:layout_gravity="end|top"
+                android:layout_margin="8dp"/>
+
+            <Button
+                android:id="@+id/btnOpenSidebar"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="프로필 목록"
+                android:layout_gravity="end|top"
+                android:layout_margin="8dp"/>
+
+        </LinearLayout>
+
+
+
+
+
 
 
         <!-- 오른쪽 아래 정렬된 버튼들 -->

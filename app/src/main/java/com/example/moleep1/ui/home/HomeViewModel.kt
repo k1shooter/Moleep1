@@ -46,7 +46,6 @@ class HomeViewModel : ViewModel() {
     }
 
     fun setList(newList: List<list_item>) {
-        selectedItem.value=null
         _itemList.value = newList.toMutableList()
     }
 }

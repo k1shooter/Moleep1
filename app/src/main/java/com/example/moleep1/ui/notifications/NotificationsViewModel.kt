@@ -29,6 +29,8 @@ class NotificationsViewModel : ViewModel() {
     var currentColor: Int=0xFF000000.toInt()
     var currentStrokeWidth: Float=8f
 
+    val placedTexts = MutableLiveData<MutableList<PlacedText>>(mutableListOf())
+
     fun addStroke(stroke: Stroke){
         val updated = strokes.value?: mutableListOf()
         updated.add(stroke)

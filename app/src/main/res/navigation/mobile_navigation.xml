@@ -26,6 +26,6 @@
     <fragment
         android:id="@+id/navigation_added"
         android:name="com.example.moleep1.ui.added.AddedFragment"
-        android:label="added"
+        android:label="TrackingMap"
         tools:layout="@layout/fragment_added" />
 </navigation>

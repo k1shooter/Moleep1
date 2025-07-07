@@ -6,7 +6,6 @@
         android:id="@+id/editImage"
         android:layout_width="100dp"
         android:layout_height="100dp"
-        android:src="@drawable/profile"
         android:layout_gravity="center_horizontal"
         android:scaleType="centerCrop"/>
 
