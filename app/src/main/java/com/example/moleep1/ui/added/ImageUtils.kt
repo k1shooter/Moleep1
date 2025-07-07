@@ -1,3 +1,5 @@
+// ImageUtils.kt
+
 package com.example.moleep1.ui.added
 
 import android.content.Context
@@ -13,11 +15,13 @@ object ImageUtils {
      */
     fun uriToBitmap(context: Context, uri: Uri): Bitmap? {
         return try {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+            val sourceBitmap = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
                 ImageDecoder.decodeBitmap(ImageDecoder.createSource(context.contentResolver, uri))
             } else {
                 MediaStore.Images.Media.getBitmap(context.contentResolver, uri)
             }
+            // ❗ [수정] 하드웨어 비트맵을 수정 가능한 소프트웨어 비트맵으로 복사하여 반환
+            sourceBitmap.copy(Bitmap.Config.ARGB_8888, true)
         } catch (e: Exception) {
             e.printStackTrace()
             null

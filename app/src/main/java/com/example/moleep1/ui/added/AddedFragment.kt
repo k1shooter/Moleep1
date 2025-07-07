@@ -1,3 +1,5 @@
+// AddedFragment.kt
+
 package com.example.moleep1.ui.added
 
 import android.net.Uri
@@ -14,6 +16,7 @@ import com.kakao.vectormap.KakaoMap
 import com.kakao.vectormap.KakaoMapReadyCallback
 import com.kakao.vectormap.MapLifeCycleCallback
 import com.kakao.vectormap.MapView
+import com.kakao.vectormap.label.Label // Label import 추가
 
 class AddedFragment : Fragment() {
 
@@ -24,12 +27,18 @@ class AddedFragment : Fragment() {
     private var mapPinManager: MapPinManager? = null
     private lateinit var locationHandler: LocationHandler
 
-    // Fragment의 핀 추가 모드 상태 변수 제거
+    // ❗ [추가] 사진을 추가할 핀(라벨)을 임시 저장하는 변수
+    private var tappedLabelForPhoto: Label? = null
 
+    // ❗ [수정] 이미지 선택 후, MapPinManager에 배지 추가를 요청하는 로직 추가
     private val pickImageLauncher = registerForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
-        uri?.let {
-            Toast.makeText(requireContext(), "사진이 선택되었습니다.", Toast.LENGTH_SHORT).show()
+        if (uri != null && tappedLabelForPhoto != null) {
+            mapPinManager?.addPhotoBadgeToLabel(tappedLabelForPhoto!!, uri)
+            Toast.makeText(requireContext(), "사진이 추가되었습니다.", Toast.LENGTH_SHORT).show()
+        } else {
+            Toast.makeText(requireContext(), "사진 추가에 실패했습니다.", Toast.LENGTH_SHORT).show()
         }
+        tappedLabelForPhoto = null // 작업 후 초기화
     }
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
@@ -46,7 +55,6 @@ class AddedFragment : Fragment() {
     }
 
     private fun setupUIListeners() {
-        // 현재 위치 버튼 클릭
         binding.fabCurrentLocation.setOnClickListener {
             binding.progressBar.visibility = View.VISIBLE
             locationHandler.requestCurrentLocation(
@@ -60,14 +68,9 @@ class AddedFragment : Fragment() {
             )
         }
 
-        // [수정] 핀 추가 모드 버튼 클릭
         binding.btnAddPinMode.setOnClickListener {
-            // 현재 버튼 텍스트를 기준으로 모드 토글
             val isEnteringPinMode = (binding.btnAddPinMode.text == "Pin")
-
-            // MapPinManager에 모드 변경 알림
             mapPinManager?.setPinAddMode(isEnteringPinMode)
-
             if (isEnteringPinMode) {
                 Toast.makeText(requireContext(), "핀을 추가할 위치를 지도에서 선택하세요.", Toast.LENGTH_SHORT).show()
                 binding.btnAddPinMode.text = "Cancel"
@@ -85,26 +88,30 @@ class AddedFragment : Fragment() {
     private val mapReadyCallback = object : KakaoMapReadyCallback() {
         override fun onMapReady(kakaoMap: KakaoMap) {
             Log.d("KakaoMap", "Map is ready")
+            // ❗ [수정] 초기화 로직을 별도 함수로 분리하여 가독성 향상
+            initializeMapManager(kakaoMap)
 
-            // [수정] MapPinManager 초기화 및 콜백 리스너 설정
-            mapPinManager = MapPinManager(requireContext(), kakaoMap).apply {
-                // 1. 핀이 클릭되었을 때 실행될 동작 정의
-                onPinClickListener = {
-                    pickImageLauncher.launch("image/*")
-                }
-                // 2. 핀이 지도에 새로 추가되었을 때 실행될 동작 정의
-                onPinAddedListener = {
-                    binding.btnAddPinMode.text = "Pin"
-                    Toast.makeText(requireContext(), "핀이 추가되었습니다.", Toast.LENGTH_SHORT).show()
-                }
-            }
-
-            // [삭제] Fragment에 있던 지도 클릭 리스너 로직 제거
-            // kakaoMap.setOnMapClickListener { ... }
-
-            // 마지막 위치 불러오기 시도, 실패하면 현재 위치 요청
             if (mapPinManager?.loadLastLocation() == false) {
                 binding.fabCurrentLocation.performClick()
+            }
+        }
+    }
+
+    /**
+     * [추가] MapPinManager를 생성하고 콜백 리스너를 설정하는 함수
+     */
+    private fun initializeMapManager(kakaoMap: KakaoMap) {
+        mapPinManager = MapPinManager(requireContext(), kakaoMap).apply {
+            // 1. 핀이 클릭되었을 때 실행될 동작 정의
+            onPinClickListener = { clickedLabel ->
+                // ❗ 클릭된 라벨을 저장하고, 이미지 선택기 실행
+                tappedLabelForPhoto = clickedLabel
+                pickImageLauncher.launch("image/*")
+            }
+            // 2. 핀이 지도에 새로 추가되었을 때 실행될 동작 정의
+            onPinAddedListener = {
+                binding.btnAddPinMode.text = "Pin"
+                Toast.makeText(requireContext(), "핀이 추가되었습니다.", Toast.LENGTH_SHORT).show()
             }
         }
     }
