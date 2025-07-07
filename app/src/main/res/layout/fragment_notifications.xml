@@ -1,22 +1,104 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
+<androidx.drawerlayout.widget.DrawerLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/drawerLayout"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    tools:context=".ui.notifications.NotificationsFragment">
-
-    <TextView
-        android:id="@+id/text_notifications"
+    android:layout_height="match_parent">
+    <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="8dp"
-        android:layout_marginTop="8dp"
-        android:layout_marginEnd="8dp"
-        android:textAlignment="center"
-        android:textSize="20sp"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
-</androidx.constraintlayout.widget.ConstraintLayout>
+        android:layout_height="match_parent">
+
+        <Button
+            android:id="@+id/btnOpenSidebar"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="프로필 목록"
+            android:layout_gravity="end|top"
+            android:layout_margin="16dp"/>
+
+        <com.example.moleep1.ui.DrawingView
+            android:id="@+id/drawingView"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:background="#FFFFFF" />
+
+
+        <!-- 오른쪽 아래 정렬된 버튼들 -->
+        <LinearLayout
+            android:id="@+id/buttonPanel"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_gravity="end|bottom"
+            android:padding="16dp"
+            android:layout_marginBottom="50dp"
+            android:background="@android:color/transparent"
+            android:gravity="end">
+
+            <!-- 색상 버튼 예시 -->
+            <Button
+                android:id="@+id/btnColorRed"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:backgroundTint="#FF0000"
+                android:text=""
+                android:layout_marginLeft="4dp"
+                android:layout_marginRight="4dp"/>
+
+
+            <Button
+                android:id="@+id/btnColorBlue"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:backgroundTint="#2196F3"
+                android:text=""
+                android:layout_marginLeft="4dp"
+                android:layout_marginRight="4dp"/>
+
+            <Button
+                android:id="@+id/btnColorBlack"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:backgroundTint="@android:color/black"
+                android:text=""
+                android:layout_marginLeft="4dp"
+                android:layout_marginRight="4dp"/>
+
+            <!-- 지우개 버튼 -->
+            <Button
+                android:id="@+id/btnEraser"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:backgroundTint="#EEEEEE"
+                android:layout_marginLeft="4dp"
+                android:layout_marginRight="4dp"/>
+
+            <Button
+                android:id="@+id/btnPanMode"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:backgroundTint="#EEEEEE"
+                android:layout_marginLeft="4dp"
+                android:layout_marginRight="4dp"
+                android:text="@string/D"
+                android:background="@color/black"/>
+
+        </LinearLayout>
+    </FrameLayout>
+
+    <LinearLayout
+        android:id="@+id/sidebar"
+        android:layout_width="280dp"
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        android:layout_gravity="end"
+        android:layout_marginBottom="50dp">
+
+        <ListView
+            android:id="@+id/listView"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"/>
+    </LinearLayout>
+
+</androidx.drawerlayout.widget.DrawerLayout>
+
