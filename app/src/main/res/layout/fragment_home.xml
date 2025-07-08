@@ -38,7 +38,7 @@
         android:layout_height="wrap_content"
         android:text="@string/add_profile"
         android:paddingBottom="60dp"
-        android:backgroundTint="@color/black"
+        android:backgroundTint="#393836"
         app:rippleColor="#000"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"

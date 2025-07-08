@@ -2,6 +2,8 @@ package com.example.moleep1.ui
 import android.util.AttributeSet
 import android.content.Context
 import android.graphics.Bitmap
+import android.graphics.BitmapFactory
+import android.graphics.BitmapShader
 import android.view.View
 import android.graphics.Canvas
 import android.graphics.Color
@@ -16,6 +18,7 @@ import com.bumptech.glide.Glide
 import com.bumptech.glide.request.target.CustomTarget
 import com.bumptech.glide.request.transition.Transition
 import android.graphics.ImageDecoder
+import android.graphics.Shader
 import android.net.Uri
 import android.os.Build
 import android.provider.MediaStore
@@ -23,11 +26,15 @@ import com.example.moleep1.ui.notifications.PlacedText
 import java.io.File
 import java.io.FileOutputStream
 import java.io.IOException
+import com.example.moleep1.R
+import com.example.moleep1.ui.notifications.PlacedGallery
+
 class DrawingView(context: Context, attrs: AttributeSet?) : View(context,attrs) {
 
 
     var placedImages = mutableListOf<PlacedImage>()
     var placedTexts = mutableListOf<PlacedText>()
+    var placedGalleries = mutableListOf<PlacedGallery>()
 
 
     private var pendingImage: Bitmap? = null
@@ -36,6 +43,11 @@ class DrawingView(context: Context, attrs: AttributeSet?) : View(context,attrs) 
     private var pendingImageWidth = 200
     private var pendingImageHeight = 200
     private var isPlacingImage = false
+
+    private var isPlacingGal = false
+    private var pendingGal: Bitmap? = null
+    private var pendingGalWidth = 200
+    private var pendingGalHeight = 200
 
     var pendingText: String? = null
     var isPlacingText = false
@@ -112,13 +124,35 @@ class DrawingView(context: Context, attrs: AttributeSet?) : View(context,attrs) 
         invalidate()
     }
 
+    fun setPlacingGallery(flag: Boolean) { isPlacingGal = flag; invalidate() }
+    fun setPendingGallery(uriString: String?) {
+        if (uriString.isNullOrEmpty()) {
+            pendingGal = null
+            invalidate()
+            return
+        }
+        pendingGal = uriToBitmap(context, uriString)
+        invalidate()
+    }
+
     var onImageSelectedListener: ((PlacedImage) -> Unit)? = null
     private var selectedImageIndex: Int? = null
+
+    var onGallerySelectedListener: ((PlacedGallery) -> Unit)? = null
+    private var selectedGalleryIndex: Int? = null
 
     fun deleteSelectedImage() {
         selectedImageIndex?.let {
             placedImages.removeAt(it)
             selectedImageIndex = null
+            invalidate()
+        }
+    }
+
+    fun deleteSelectedGallery() {
+        selectedGalleryIndex?.let {
+            placedGalleries.removeAt(it)
+            selectedGalleryIndex = null
             invalidate()
         }
     }
@@ -144,6 +178,25 @@ class DrawingView(context: Context, attrs: AttributeSet?) : View(context,attrs) 
             })
     }
 
+    fun addGalleryImage(imageUri: String?) {
+        if (imageUri.isNullOrEmpty()) return
+        Glide.with(this)
+            .asBitmap()
+            .load(imageUri)
+            .into(object : CustomTarget<Bitmap>() {
+                override fun onResourceReady(resource: Bitmap, transition: Transition<in Bitmap>?) {
+                    if (!isAttachedToWindow) return
+                    pendingGal = Bitmap.createScaledBitmap(resource, pendingGalWidth, pendingGalHeight, true)
+                    isPlacingGal = true // 다음 클릭에서 위치 확정
+                    invalidate()
+                }
+                override fun onLoadCleared(placeholder: Drawable?) {
+                    pendingGal = null
+                    isPlacingGal = false
+                }
+            })
+    }
+
     var onStrokeCreated: ((Stroke)->Unit)?=null
     var strokes: List<Stroke> = emptyList()
     private var currentPath: Path? = null
@@ -154,7 +207,7 @@ class DrawingView(context: Context, attrs: AttributeSet?) : View(context,attrs) 
     private val scaleGestureDetector = ScaleGestureDetector(context, object : ScaleGestureDetector.SimpleOnScaleGestureListener(){
         override fun onScale(detector: ScaleGestureDetector): Boolean {
             scaleFactor*=detector.scaleFactor
-            scaleFactor=scaleFactor.coerceIn(0.3f, 5.0f)
+            scaleFactor=scaleFactor.coerceIn(0.1f, 5.0f)
             invalidate()
             return true
         }
@@ -178,10 +231,13 @@ class DrawingView(context: Context, attrs: AttributeSet?) : View(context,attrs) 
     }
 
 
+    private val textureBitmap = BitmapFactory.decodeResource(resources, R.drawable.boardtex)
 
     override fun onDraw(canvas: Canvas) {
-        super.onDraw(canvas)
+        // 1. 텍스처로 캔버스 전체 채우기
 
+        // 2. 그 위에 기존의 그림, 이미지, 텍스트 등 원하는 요소를 그리기
+        super.onDraw(canvas)
 
         val centerX=width/2f
         val centerY = height/2f
@@ -192,13 +248,21 @@ class DrawingView(context: Context, attrs: AttributeSet?) : View(context,attrs) 
 
 
 
-//        for (img in placedImages) {
-//            canvas.drawBitmap(img.bitmap, img.x, img.y, null)
-//        }
-//        pendingImage?.let {
-//            // 예: 화면 중앙에 미리 보여주기 (옵션)
-//            canvas.drawBitmap(it, (width - it.width)/2f, (height - it.height)/2f, null)
-//        }
+        for ((i, img) in placedGalleries.withIndex()) {
+            val w = img.width.coerceAtLeast(10)
+            val h = img.height.coerceAtLeast(10)
+            val scaledBitmap = Bitmap.createScaledBitmap(img.bitmap, w, h, true)
+            canvas.drawBitmap(scaledBitmap, img.x, img.y, null)
+            // 선택된 이미지는 테두리 표시
+//            if (i == selectedImageIndex) {
+//                val paint = Paint().apply {
+//                    color = Color.RED
+//                    style = Paint.Style.STROKE
+//                    strokeWidth = 5f
+//                }
+//                canvas.drawRect(img.x, img.y, img.x + img.width, img.y + img.height, paint)
+//            }
+        }
 
         for ((i, img) in placedImages.withIndex()) {
             val w = img.width.coerceAtLeast(10)
@@ -321,6 +385,38 @@ class DrawingView(context: Context, attrs: AttributeSet?) : View(context,attrs) 
 
             }
 
+            if (isPlacingGal && pendingGal != null && event.action == MotionEvent.ACTION_DOWN) {
+                // 클릭한 위치에 이미지를 추가
+                val centerX = width / 2f
+                val centerY = height / 2f
+                val cx = centerX - offsetX
+                val cy = centerY - offsetY
+                val canvasX = (event.x - offsetX - cx) / scaleFactor + cx
+                val canvasY = (event.y - offsetY - cy) / scaleFactor + cy
+
+                val x = canvasX - pendingGalWidth / 2f
+                val y = canvasY - pendingGalHeight / 2f
+
+                placedGalleries.add(
+                    PlacedGallery(
+                        bitmap = pendingGal!!,
+                        x = x,
+                        y = y,
+                        width = pendingGalWidth,
+                        height = pendingGalHeight,
+                    )
+                )
+                // 다음 클릭을 위해 초기화
+                pendingGal = null
+                isPlacingGal = false
+
+                invalidate()
+
+
+
+
+            }
+
             scaleGestureDetector.onTouchEvent(event)
             //if(event.pointerCount>1) return true
 
@@ -367,7 +463,19 @@ class DrawingView(context: Context, attrs: AttributeSet?) : View(context,attrs) 
                             return true
                         }
                     }
+                    for (i in placedGalleries.indices.reversed()) {
+                        val img = placedGalleries[i]
+                        if (canvasX >= img.x && canvasX <= img.x + img.width &&
+                            canvasY >= img.y && canvasY <= img.y + img.height) {
+                            selectedGalleryIndex = i
+                            // 리스너나 콜백으로 외부에 알림 (정보 보여주기, 삭제 등)
+                            onGallerySelectedListener?.invoke(img)
+                            invalidate()
+                            return true
+                        }
+                    }
                     selectedImageIndex = null
+                    selectedGalleryIndex = null
                     invalidate()
                     return true
                 }

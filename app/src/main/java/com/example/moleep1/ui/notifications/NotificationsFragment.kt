@@ -33,8 +33,12 @@ import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.core.app.ActivityCompat
 import android.Manifest
+import android.app.Activity
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.widget.ImageButton
+import androidx.activity.result.ActivityResultLauncher
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.ContextCompat
 import com.example.moleep1.ui.PrefsManager
 import com.example.moleep1.ui.home.HomeViewModelFactory
@@ -47,6 +51,8 @@ class NotificationsFragment : Fragment() {
 
     private lateinit var adapter: ListViewAdapter
 
+    private lateinit var imagePickerLauncher: ActivityResultLauncher<Intent>
+    private var selectedImageUri: Uri? = null // 새로 선택된 이미지를 저장할 변수
 
     private var _binding: FragmentNotificationsBinding? = null
 
@@ -64,9 +70,8 @@ class NotificationsFragment : Fragment() {
         val listView=view.findViewById<ListView>(R.id.listView)
         val drawingView=view.findViewById<DrawingView>(R.id.drawingView)
 
-        val prefsManager = PrefsManager(requireContext())
-        val factory = HomeViewModelFactory(prefsManager)
-        val homeViewModel = ViewModelProvider(this, factory).get(HomeViewModel::class.java)
+        val factory = HomeViewModelFactory(PrefsManager(requireContext()))
+        val homeViewModel = ViewModelProvider(requireActivity(), factory).get(HomeViewModel::class.java)
 
         val adapter = ListViewAdapter(requireContext(), ArrayList(homeViewModel.itemList.value?: emptyList()))
         listView.adapter=adapter
@@ -80,6 +85,7 @@ class NotificationsFragment : Fragment() {
 
 
         val btnSave = view.findViewById<ImageButton>(R.id.btnSave)
+        val btnGallery =view.findViewById<ImageButton>(R.id.btnAddGallery)
 
         btnSave.setOnClickListener {
             // 1. 권한 체크
@@ -109,6 +115,41 @@ class NotificationsFragment : Fragment() {
 
         btnClear.setOnClickListener {
             drawingView.clearCanvas()
+        }
+
+        imagePickerLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+            if (result.resultCode == Activity.RESULT_OK && result.data != null) {
+                // 이미지를 선택하면 selectedImageUri에 저장하고 ImageView에 바로 보여줌
+                selectedImageUri = result.data!!.data
+                viewModel.setPendingGallery(selectedImageUri.toString())
+                viewModel.setIsPlacingGallery(true)
+            }
+        }
+
+        btnGallery.setOnClickListener {
+            // 최신 방식의 ActivityResultLauncher 초기화
+
+
+            val intent = Intent(Intent.ACTION_PICK).apply {
+                type = "image/*"
+            }
+            imagePickerLauncher.launch(intent)
+
+
+        }
+
+        viewModel.isPlacingGallery.observe(viewLifecycleOwner) { placing ->
+//            if(placing==false){
+//                viewModel.setGalleryClean()
+//            }
+            drawingView.setPlacingGallery(placing)
+        }
+        viewModel.pendingGallery.observe(viewLifecycleOwner) { uri ->
+            drawingView.addGalleryImage(uri)
+            drawingView.setPendingGallery(uri)
+            if(uri!=null) {
+                viewModel.pendingGallery.value = null
+            }
         }
 
         btnAddText.setOnClickListener {
@@ -142,6 +183,10 @@ class NotificationsFragment : Fragment() {
             }
         }
 
+
+
+
+
         viewModel.isPlacingImage.observe(viewLifecycleOwner) { placing ->
             drawingView.setPlacingImage(placing)
         }
@@ -149,8 +194,10 @@ class NotificationsFragment : Fragment() {
             drawingView.setPendingImageUri(uri)
         }
 
-        drawingView.setPlacingImage(false)
-        drawingView.setPendingImageUri(null)
+//        drawingView.setPlacingImage(false)
+//        drawingView.setPendingImageUri(null)
+//        drawingView.setPlacingGallery(false)
+//        drawingView.setPendingGallery(null)
         //선택된 아이템이 바뀐다면?
     }
 
@@ -163,18 +210,17 @@ class NotificationsFragment : Fragment() {
         val binding = _binding!!
         //val root=inflater.inflate(R.layout.fragment_notifications, container, false)
         val drawingView=binding.drawingView
-        val prefsManager = PrefsManager(requireContext())
-        val factory = HomeViewModelFactory(prefsManager)
-        val homeViewModel = ViewModelProvider(this, factory).get(HomeViewModel::class.java)
+        val factory = HomeViewModelFactory(PrefsManager(requireContext()))
+        val homeViewModel = ViewModelProvider(requireActivity(), factory).get(HomeViewModel::class.java)
 
         drawingView.onImageSelectedListener = { img ->
-            homeViewModel.selectItemById(img.id)
+            val profile = homeViewModel.itemList.value?.find { it.id == img.id }
 
             val dialogview= LayoutInflater.from(requireContext()).inflate(R.layout.image_selected_layout,null,false)
             val tvProfileInfo=dialogview.findViewById<TextView>(R.id.tvProfileInfo)
             val seekBarSize=dialogview.findViewById<SeekBar>(R.id.seekBarSize)
 
-            tvProfileInfo.text="이름: ${homeViewModel.viewedItem.value?.name}\n특이사항: ${homeViewModel.viewedItem.value?.desc}"
+            tvProfileInfo.text="이름: ${profile?.name}\n특이사항: ${profile?.desc}"
             seekBarSize.progress=img.width
 
             seekBarSize.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener{
@@ -197,11 +243,68 @@ class NotificationsFragment : Fragment() {
 
             })
 
-            AlertDialog.Builder(requireContext())
+            AlertDialog.Builder(requireContext(), R.style.CustomDialog)
                 .setTitle("프로필 정보")
                 .setView(dialogview)
                 .setPositiveButton("삭제") { _, _ ->
                     drawingView.deleteSelectedImage()
+                }
+                .setNegativeButton("닫기", null)
+                .show()
+        }//이미지 눌렀을때 띄워버리기
+
+        drawingView.onGallerySelectedListener = { img ->
+
+            val dialogview= LayoutInflater.from(requireContext()).inflate(R.layout.gallery_selected_layout,null,false)
+            val seekBarSizew=dialogview.findViewById<SeekBar>(R.id.seekBarSizew)
+            val seekBarSizeh=dialogview.findViewById<SeekBar>(R.id.seekBarSizeh)
+
+            seekBarSizew.progress=img.width
+            seekBarSizeh.progress=img.height
+
+            seekBarSizew.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener{
+                override fun onProgressChanged(
+                    seekBar: SeekBar?,
+                    progress: Int,
+                    fromUser: Boolean
+                ) {
+                    val newSize = progress.coerceAtLeast(50) // 최소 크기 제한
+                    img.width = newSize
+                    drawingView.invalidate()
+                }
+
+                override fun onStartTrackingTouch(seekBar: SeekBar?) {
+                }
+
+                override fun onStopTrackingTouch(seekBar: SeekBar?) {
+                }
+
+            })
+
+            seekBarSizeh.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener{
+                override fun onProgressChanged(
+                    seekBar: SeekBar?,
+                    progress: Int,
+                    fromUser: Boolean
+                ) {
+                    val newSize = progress.coerceAtLeast(50) // 최소 크기 제한
+                    img.height = newSize
+                    drawingView.invalidate()
+                }
+
+                override fun onStartTrackingTouch(seekBar: SeekBar?) {
+                }
+
+                override fun onStopTrackingTouch(seekBar: SeekBar?) {
+                }
+
+            })
+
+            AlertDialog.Builder(requireContext(), R.style.CustomDialog)
+                .setTitle("사진 정보")
+                .setView(dialogview)
+                .setPositiveButton("삭제") { _, _ ->
+                    drawingView.deleteSelectedGallery()
                 }
                 .setNegativeButton("닫기", null)
                 .show()
@@ -257,6 +360,22 @@ class NotificationsFragment : Fragment() {
 
         drawingView.setPaintStyle(viewModel.currentColor, viewModel.currentStrokeWidth)
         drawingView.onStrokeCreated={stroke -> viewModel.addStroke(stroke)}
+        viewModel.placedGalleries.observe(viewLifecycleOwner) { galleries ->
+            drawingView.placedGalleries = galleries ?: mutableListOf()
+            drawingView.invalidate()
+        }
+
+        viewModel.isPlacingGallery.observe(viewLifecycleOwner) { placing ->
+            drawingView.setPlacingGallery(placing)
+        }
+        viewModel.pendingGallery.observe(viewLifecycleOwner) { uri ->
+            drawingView.setPendingGallery(uri)
+        }
+        viewModel.placedGalleries.observe(viewLifecycleOwner) { galleries ->
+            drawingView.placedGalleries = galleries ?: mutableListOf()
+            drawingView.invalidate()
+        }
+
         viewModel.strokes.observe(viewLifecycleOwner){strokes ->
             drawingView.strokes=strokes
             drawingView.invalidate()
