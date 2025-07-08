@@ -29,6 +29,9 @@ class EventViewModel(private val eventManager: EventManager) : ViewModel() {
     private val _directionsResult = MutableLiveData<Event<DirectionsResponse>>()
     val directionsResult: LiveData<Event<DirectionsResponse>> = _directionsResult
 
+    private val _routePath = MutableLiveData<Event<List<LatLng>>>()
+    val routePath: LiveData<Event<List<LatLng>>> = _routePath
+
 
     init {
         // ViewModel 생성 시 SharedPreferences에서 데이터 로드
@@ -132,6 +135,51 @@ class EventViewModel(private val eventManager: EventManager) : ViewModel() {
                 // TODO: 네트워크 에러 등 예외 처리
                 Log.e("EventViewModel", "API Exception", e)
             }
+        }
+    }
+
+    // ❗ [추가] 여러 지점을 순회하며 길찾기 API를 호출하고 경로를 합치는 함수
+    fun findRoutePathForEvents(events: List<EventItem>) {
+        if (events.size < 2) return
+
+        viewModelScope.launch {
+            val totalVertexes = mutableListOf<Double>()
+
+            // events 리스트를 두 개씩 짝지어 API 호출 (A-B, B-C, C-D...)
+            for (i in 0 until events.size - 1) {
+                val originEvent = events[i]
+                val destinationEvent = events[i + 1]
+
+                val originStr = "${originEvent.longitude},${originEvent.latitude}"
+                val destStr = "${destinationEvent.longitude},${destinationEvent.latitude}"
+
+                try {
+                    val response = ApiClient.service.getCarDirections(origin = originStr, destination = destStr)
+                    if (response.isSuccessful) {
+                        response.body()?.routes?.firstOrNull()?.sections?.forEach { section ->
+                            section.roads.forEach { road ->
+                                totalVertexes.addAll(road.vertexes)
+                            }
+                        }
+                    } else {
+                        Log.e("ViewModel", "API Error: ${response.code()}")
+                    }
+                } catch (e: Exception) {
+                    Log.e("ViewModel", "API Exception", e)
+                }
+            }
+
+            // vertexes (x1, y1, x2, y2...) 리스트를 LatLng 리스트로 변환
+            val finalPath = mutableListOf<LatLng>()
+            for (i in totalVertexes.indices step 2) {
+                if (i + 1 < totalVertexes.size) {
+                    val lng = totalVertexes[i]
+                    val lat = totalVertexes[i + 1]
+                    finalPath.add(LatLng.from(lat, lng))
+                }
+            }
+            // 최종 경로를 LiveData로 전달
+            _routePath.postValue(Event(finalPath))
         }
     }
 }
