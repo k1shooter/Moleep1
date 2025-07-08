@@ -51,11 +51,6 @@ class DashboardFragment : Fragment() {
     ): View {
         _binding = FragmentDashboardBinding.inflate(inflater, container, false)
 
-        // 초기 데이터 추가 로직은 ViewModel로 옮기는 것이 더 좋지만, 우선 이렇게 유지
-        if (viewModel.imageList.value.isNullOrEmpty()) {
-            addInitialDrawablesAsUris()
-        }
-
         return binding.root
     }
 
@@ -88,16 +83,6 @@ class DashboardFragment : Fragment() {
         }
     }
 
-    private fun addInitialDrawablesAsUris() {
-        val initialDrawableIds = listOf(R.drawable.pic4, R.drawable.pic5, R.drawable.pic6)
-        val uriList = mutableListOf<Uri>()
-        initialDrawableIds.forEach { resId ->
-            val uri = "android.resource://${requireContext().packageName}/$resId".toUri()
-            uriList.add(uri)
-        }
-        // ✅ ViewModel의 데이터를 업데이트
-        viewModel.setList(uriList)
-    }
 
     override fun onDestroyView() {
         super.onDestroyView()

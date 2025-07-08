@@ -19,24 +19,17 @@ class AddedFragment : Fragment() {
     private var _binding: FragmentAddedBinding? = null
     private val binding get() = _binding!!
 
-    // --- 주요 객체 선언 ---
     private lateinit var mapView: MapView
     private var mapPinManager: MapPinManager? = null
     private lateinit var locationHandler: LocationHandler
     private lateinit var pathPersonAdapter: PathPersonAdapter
+    private var isPathModeActive = false
 
-    // --- 상태 관리 변수 ---
-    private var isPathModeActive = false // 동선 표시 모드 활성화 상태
-    private var isInitialLoad = true     // 지도 초기 로딩 확인
-
-    // --- ViewModel 설정 ---
-    // Activity의 생명주기를 따르는 ViewModel을 공유하여 다른 UI 컴포넌트와 데이터를 교환
     private val viewModel: EventViewModel by activityViewModels {
         EventViewModelFactory(EventManager(requireContext()))
     }
     private val homeViewModel: HomeViewModel by activityViewModels()
 
-    // --- Fragment 생명주기 ---
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
         _binding = FragmentAddedBinding.inflate(inflater, container, false)
         locationHandler = LocationHandler(this)
@@ -46,19 +39,19 @@ class AddedFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         mapView = binding.mapView
-        mapView.start(mapLifeCycleCallback, mapReadyCallback) // 지도 시작
-        setupUIListeners()      // UI 버튼 리스너 설정
-        setupPathUI()           // 동선 표시용 UI 설정
-        setupViewModelObservers() // ViewModel 데이터 변경 감지 시작
+        mapView.start(mapLifeCycleCallback, mapReadyCallback)
+        setupUIListeners()
+        setupPathUI()
     }
 
-    // --- 초기 설정 함수 ---
     private fun setupPathUI() {
         pathPersonAdapter = PathPersonAdapter { person ->
-            // 인물 클릭 시, ViewModel에 경로 탐색을 '요청'만 함
             val events = viewModel.getEventsForAttendee(person.id)
+            if (events.size < 2) {
+                Toast.makeText(requireContext(), "경로를 만들기에 사건 수가 부족합니다.", Toast.LENGTH_SHORT).show()
+                return@PathPersonAdapter
+            }
             viewModel.findRoutePathForEvents(events)
-
             binding.cardViewPersonList.visibility = View.GONE
         }
         binding.rvPathPersonList.adapter = pathPersonAdapter
@@ -109,37 +102,45 @@ class AddedFragment : Fragment() {
         }
     }
 
+    // ViewModel의 LiveData를 관찰하여 UI를 업데이트하는 로직
     private fun setupViewModelObservers() {
-        // 1. 전체 리스트 Observer (초기 로딩 시에만 전체 핀을 그림)
-        viewModel.eventList.observe(viewLifecycleOwner) { events ->
-            if (isInitialLoad && events != null) {
-                mapPinManager?.clearAllPins()
-                events.forEach { event -> mapPinManager?.addPinFromData(event) }
-                isInitialLoad = false
+        // ❗ [수정] "데이터 준비 완료" 신호를 받으면, 단 한 번만 전체 핀을 그립니다.
+        viewModel.isDataReady.observe(viewLifecycleOwner) { event ->
+            event.getContentIfNotHandled()?.let { isReady ->
+                if (isReady) {
+                    val events = viewModel.eventList.value
+                    Log.d("InitialLoad", "데이터 준비 완료, ${events?.size ?: 0}개의 핀을 그립니다.")
+                    mapPinManager?.clearAllPins()
+                    events?.forEach { mapPinManager?.addPinFromData(it) }
+                }
             }
         }
-        // 2. 새 핀 추가 Observer (핀 하나만 추가)
-        viewModel.newPinAdded.observe(viewLifecycleOwner) { event ->
-            event.getContentIfNotHandled()?.let { newEvent -> mapPinManager?.addPinFromData(newEvent) }
-        }
-        // 3. 기존 핀 업데이트 Observer (핀 하나만 업데이트)
-        viewModel.pinUpdated.observe(viewLifecycleOwner) { event ->
-            event.getContentIfNotHandled()?.let { updatedEvent -> mapPinManager?.updatePinDetails(updatedEvent) }
-        }
-        // 4. 핀 삭제 Observer (핀 하나만 삭제)
-        viewModel.pinDeleted.observe(viewLifecycleOwner) { event ->
-            event.getContentIfNotHandled()?.let { eventId -> mapPinManager?.removePinByEventId(eventId) }
-        }
 
+        // --- 개별 업데이트/추가/삭제 Observer는 그대로 유지 ---
+        viewModel.newPinAdded.observe(viewLifecycleOwner) { event ->
+            event.getContentIfNotHandled()?.let { newEvent ->
+                mapPinManager?.addPinFromData(newEvent)
+            }
+        }
+        viewModel.pinUpdated.observe(viewLifecycleOwner) { event ->
+            event.getContentIfNotHandled()?.let { updatedEvent ->
+                mapPinManager?.updatePinDetails(updatedEvent)
+            }
+        }
+        viewModel.pinDeleted.observe(viewLifecycleOwner) { event ->
+            event.getContentIfNotHandled()?.let { eventId ->
+                mapPinManager?.removePinByEventId(eventId)
+            }
+        }
         viewModel.routePath.observe(viewLifecycleOwner) { event ->
             event.getContentIfNotHandled()?.let { path ->
-                mapPinManager?.clearAllPaths() // 기존 동선 지우기
-                mapPinManager?.drawPath(path)  // 새 동선 그리기
+                mapPinManager?.clearAllPaths()
+                mapPinManager?.drawPath(path)
             }
         }
     }
 
-    // --- 지도 관련 콜백 및 Manager 초기화 ---
+    // 지도 관련 콜백
     private val mapLifeCycleCallback = object : MapLifeCycleCallback() {
         override fun onMapDestroy() {}
         override fun onMapError(error: Exception) { Log.e("KakaoMap", "onMapError", error) }
@@ -148,6 +149,9 @@ class AddedFragment : Fragment() {
     private val mapReadyCallback = object : KakaoMapReadyCallback() {
         override fun onMapReady(kakaoMap: KakaoMap) {
             initializeMapManager(kakaoMap)
+            // ❗ [수정] 지도가 준비된 후에 Observer 설정을 호출합니다.
+            setupViewModelObservers()
+
             if (mapPinManager?.loadLastLocation() == false) {
                 binding.fabCurrentLocation.performClick()
             }

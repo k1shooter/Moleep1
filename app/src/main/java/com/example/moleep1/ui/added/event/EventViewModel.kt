@@ -12,11 +12,10 @@ import com.kakao.vectormap.LatLng
 import kotlinx.coroutines.launch
 
 class EventViewModel(private val eventManager: EventManager) : ViewModel() {
-
     private val _eventList = MutableLiveData<MutableList<EventItem>>()
     val eventList: LiveData<MutableList<EventItem>> = _eventList
 
-    // 단일 이벤트를 위한 LiveData
+    // --- 단일 이벤트를 위한 LiveData ---
     private val _newPinAdded = MutableLiveData<Event<EventItem>>()
     val newPinAdded: LiveData<Event<EventItem>> = _newPinAdded
 
@@ -26,17 +25,29 @@ class EventViewModel(private val eventManager: EventManager) : ViewModel() {
     private val _pinDeleted = MutableLiveData<Event<String>>()
     val pinDeleted: LiveData<Event<String>> = _pinDeleted
 
+    // --- 경로 탐색을 위한 LiveData ---
     private val _directionsResult = MutableLiveData<Event<DirectionsResponse>>()
     val directionsResult: LiveData<Event<DirectionsResponse>> = _directionsResult
 
     private val _routePath = MutableLiveData<Event<List<LatLng>>>()
     val routePath: LiveData<Event<List<LatLng>>> = _routePath
 
+    // ❗ [추가] 초기 데이터 로드가 완료되었음을 알리는 LiveData
+    private val _isDataReady = MutableLiveData<Event<Boolean>>()
+    val isDataReady: LiveData<Event<Boolean>> = _isDataReady
 
     init {
-        // ViewModel 생성 시 SharedPreferences에서 데이터 로드
-        _eventList.value = eventManager.loadEventList()
+        // ViewModel이 생성될 때 저장소에서 데이터를 불러옴
+        val loadedList = eventManager.loadEventList()
+        _eventList.value = loadedList
+        Log.d("ViewModelInit", "저장소에서 불러온 Event 개수: ${loadedList.size}")
+
+        // ❗ [추가] 데이터 로드가 끝났다는 신호를 보냄
+        _isDataReady.value = Event(true)
     }
+
+    // ❗ [제거] performInitialLoad() 함수는 더 이상 사용하지 않으므로 삭제합니다.
+    // fun performInitialLoad(): Boolean { ... }
 
     fun findEventById(eventId: String): EventItem? {
         return _eventList.value?.find { it.eventId == eventId }
@@ -44,27 +55,19 @@ class EventViewModel(private val eventManager: EventManager) : ViewModel() {
 
     fun getEventsForAttendee(personId: String): List<EventItem> {
         return _eventList.value
-            ?.filter { it.attendeeIds.contains(personId) && it.eventTime != null } // 해당 인물이 포함되고 시간이 있는 사건만 필터링
-            ?.sortedBy { it.eventTime } // 시간순으로 정렬
+            ?.filter { it.attendeeIds.contains(personId) && it.eventTime != null }
+            ?.sortedBy { it.eventTime }
             ?: emptyList()
     }
 
     fun addOrUpdateEvent(
-        eventId: String?,
-        name: String,
-        desc: String,
-        latLng: LatLng,
-        photoPath: String?, // 이제 URI가 아닌 파일 경로
-        eventTime: Long?,
-        attendeeIds: List<String>
-    ): EventItem {
+        eventId: String?, name: String, desc: String, latLng: LatLng,
+        photoPath: String?, eventTime: Long?, attendeeIds: List<String>
+    ) {
         val currentList = _eventList.value ?: mutableListOf()
         val existingEvent = if (eventId != null) findEventById(eventId) else null
 
-        val savedEvent: EventItem
-
         if (existingEvent != null) {
-            // --- 기존 이벤트 수정 ---
             existingEvent.eventName = name
             existingEvent.description = desc
             existingEvent.eventTime = eventTime
@@ -74,14 +77,8 @@ class EventViewModel(private val eventManager: EventManager) : ViewModel() {
             }
             existingEvent.attendeeIds.clear()
             existingEvent.attendeeIds.addAll(attendeeIds)
-
-            savedEvent = existingEvent
-
-            // "수정" 신호를 LiveData로 보냄
-            _pinUpdated.value = Event(savedEvent)
-
+            _pinUpdated.value = Event(existingEvent)
         } else {
-            // --- 새 이벤트 추가 ---
             val newEvent = EventItem(
                 eventName = name, description = desc,
                 latitude = latLng.latitude, longitude = latLng.longitude,
@@ -89,33 +86,17 @@ class EventViewModel(private val eventManager: EventManager) : ViewModel() {
                 attendeeIds = attendeeIds.toMutableList()
             )
             currentList.add(newEvent)
-
-            savedEvent = newEvent
-
-            // "추가" 신호를 LiveData로 보냄
-            _newPinAdded.value = Event(savedEvent)
+            _newPinAdded.value = Event(newEvent)
         }
-
-        // 전체 리스트 상태를 최신으로 업데이트하고 SharedPreferences에 저장
         _eventList.value = currentList.toMutableList()
         eventManager.saveEventList(currentList)
-
-        // 수정 또는 추가된 EventItem 객체를 반환
-        return savedEvent
     }
 
     fun deleteEvent(eventId: String) {
         val currentList = _eventList.value ?: return
-
-        // 리스트에서 해당 아이템 제거
         currentList.removeAll { it.eventId == eventId }
-
-        // SharedPreferences에 변경된 리스트 저장
         eventManager.saveEventList(currentList)
-        // 전체 리스트 LiveData 업데이트
         _eventList.value = currentList
-
-        // '삭제' 신호 발생
         _pinDeleted.value = Event(eventId)
     }
 
