@@ -14,19 +14,28 @@ import androidx.appcompat.app.AlertDialog
 import androidx.core.net.toUri
 import androidx.fragment.app.DialogFragment
 import androidx.fragment.app.activityViewModels
+import androidx.lifecycle.ViewModelProvider
+import com.example.moleep1.ui.DrawingView
+import com.example.moleep1.ui.PrefsManager
 import com.example.moleep1.ui.home.HomeViewModel
+import com.example.moleep1.ui.home.HomeViewModelFactory
+import com.example.moleep1.ui.notifications.NotificationsViewModel
 
 class HomeEdit(
     private val item: list_item,
-    private val position: Int
+    private val id : String
 ) : DialogFragment() {
 
     // activityViewModels()는 Activity 범위의 ViewModel을 가져오므로 올바른 선택입니다.
-    private val viewModel: HomeViewModel by activityViewModels()
+
+
     private var selectedImageUri: Uri? = null // 새로 선택된 이미지를 저장할 변수
     private lateinit var imagePickerLauncher: ActivityResultLauncher<Intent>
 
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
+        val factory = HomeViewModelFactory(PrefsManager(requireContext()))
+        val viewModel = ViewModelProvider(requireActivity(), factory).get(HomeViewModel::class.java)
+
         val view = LayoutInflater.from(requireContext()).inflate(R.layout.home_edit, null)
 
         val imageView = view.findViewById<ImageView>(R.id.editImage)
@@ -55,6 +64,7 @@ class HomeEdit(
             imagePickerLauncher.launch(intent)
         }
 
+
         return AlertDialog.Builder(requireContext())
             .setTitle("Edit item")
             .setView(view)
@@ -68,7 +78,12 @@ class HomeEdit(
                     descEdit.text.toString(),
                     finalImageUriString // 수정한 URI로 객체 생성
                 )
-                viewModel.updateItem(position, updatedItem)
+                viewModel.updateItem(id, updatedItem)
+            }
+            .setNeutralButton("Delete") { _, _ -> // ★★★ 삭제 버튼 추가 ★★★
+                viewModel.removeItem(id)
+                val notiviewModel: NotificationsViewModel by activityViewModels()
+                notiviewModel.removeImagesByProfileId(id)
             }
             .setNegativeButton("Cancel", null)
             .create()

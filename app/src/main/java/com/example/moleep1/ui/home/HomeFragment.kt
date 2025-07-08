@@ -40,9 +40,12 @@ class HomeFragment : Fragment() {
         _binding = FragmentHomeBinding.inflate(inflater, container, false)
         val root: View = binding.root
 
-        val prefsManager = PrefsManager(requireContext())
-        val factory = HomeViewModelFactory(prefsManager)
-        val homeViewModel = ViewModelProvider(this, factory).get(HomeViewModel::class.java)
+//        val prefsManager = PrefsManager(requireContext())
+//        val factory = HomeViewModelFactory(prefsManager)
+//        val homeViewModel = ViewModelProvider(this, factory).get(HomeViewModel::class.java)
+
+        val factory = HomeViewModelFactory(PrefsManager(requireContext()))
+        val homeViewModel = ViewModelProvider(requireActivity(), factory).get(HomeViewModel::class.java)
 
         // 1. 어댑터 설정
         adapter = ListViewAdapter(requireContext(), ArrayList()) // 처음엔 빈 리스트로 시작
@@ -56,12 +59,13 @@ class HomeFragment : Fragment() {
             adapter.notifyDataSetChanged() // ListView는 notifyDataSetChanged()가 필요
         }
 
+
         // 3. 아이템 클릭 리스너 설정
         binding.listView.setOnItemClickListener { parent, view, position, id ->
             val selectedItem = homeViewModel.itemList.value?.get(position)
             if (selectedItem != null) {
                 // HomeEdit 다이얼로그 호출
-                HomeEdit(selectedItem, position)
+                HomeEdit(selectedItem, selectedItem.id)
                     .show(parentFragmentManager, "edit_dialog")
             }
         }

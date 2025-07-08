@@ -44,7 +44,10 @@ public class ListViewAdapter extends BaseAdapter {
 
     @Override
     public View getView(int position, View convertView, ViewGroup parent) {
-        View view = mLayoutInflater.inflate(R.layout.activity_list_item, null);
+        View view = convertView;
+        if (view == null) {
+            view = mLayoutInflater.inflate(R.layout.activity_list_item, parent, false);
+        }
         TextView titleTextView = (TextView) view.findViewById(R.id.textView1);
         TextView descTextView = (TextView) view.findViewById(R.id.textView2);
 

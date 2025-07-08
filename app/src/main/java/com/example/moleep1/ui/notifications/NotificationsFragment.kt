@@ -134,10 +134,10 @@ class NotificationsFragment : Fragment() {
         }
         homeViewModel.selectedItem.observe(viewLifecycleOwner) { item ->
             if (item != null) {
-                drawingView.addProfileImage(item.imageUri, adapter.getPosition(item))
+                drawingView.addProfileImage(item.imageUri, item.id)
                 homeViewModel.selectedItem.value = null
             } else {
-                drawingView.addProfileImage(null, 0)
+                drawingView.addProfileImage(null, "")
                 //homeViewModel.selectedItem.value = null
             }
         }
@@ -168,13 +168,13 @@ class NotificationsFragment : Fragment() {
         val homeViewModel = ViewModelProvider(this, factory).get(HomeViewModel::class.java)
 
         drawingView.onImageSelectedListener = { img ->
-            homeViewModel.selectItemByPosition(img.position)
+            homeViewModel.selectItemById(img.id)
 
             val dialogview= LayoutInflater.from(requireContext()).inflate(R.layout.image_selected_layout,null,false)
             val tvProfileInfo=dialogview.findViewById<TextView>(R.id.tvProfileInfo)
             val seekBarSize=dialogview.findViewById<SeekBar>(R.id.seekBarSize)
 
-            tvProfileInfo.text="이름: ${homeViewModel.viewedItem.value.name}\n특이사항: ${homeViewModel.viewedItem.value.desc}"
+            tvProfileInfo.text="이름: ${homeViewModel.viewedItem.value?.name}\n특이사항: ${homeViewModel.viewedItem.value?.desc}"
             seekBarSize.progress=img.width
 
             seekBarSize.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener{

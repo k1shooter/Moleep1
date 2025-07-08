@@ -123,7 +123,7 @@ class DrawingView(context: Context, attrs: AttributeSet?) : View(context,attrs) 
         }
     }
 
-    fun addProfileImage(imageUri: String?, position: Int) {
+    fun addProfileImage(imageUri: String?, id : String) {
         if (imageUri.isNullOrEmpty()) return
         Glide.with(this)
             .asBitmap()
@@ -133,12 +133,12 @@ class DrawingView(context: Context, attrs: AttributeSet?) : View(context,attrs) 
                     if (!isAttachedToWindow) return
                     pendingImage = Bitmap.createScaledBitmap(resource, pendingImageWidth, pendingImageHeight, true)
                     isPlacingImage = true // 다음 클릭에서 위치 확정
-                    pendingPosition = position
+                    pendingId=id
                     invalidate()
                 }
                 override fun onLoadCleared(placeholder: Drawable?) {
                     pendingImage = null
-                    pendingPosition = 0
+                    pendingId=null
                     isPlacingImage = false
                 }
             })
@@ -176,6 +176,8 @@ class DrawingView(context: Context, attrs: AttributeSet?) : View(context,attrs) 
         currentPaintColor=color
         currentStrokeWidth=strokeWidth
     }
+
+
 
     override fun onDraw(canvas: Canvas) {
         super.onDraw(canvas)
@@ -308,7 +310,7 @@ class DrawingView(context: Context, attrs: AttributeSet?) : View(context,attrs) 
                         y = y,
                         width = pendingImageWidth,
                         height = pendingImageHeight,
-                        position = pendingPosition
+                        id = pendingId.toString()
                     )
                 )
                 // 다음 클릭을 위해 초기화

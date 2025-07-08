@@ -8,5 +8,5 @@ data class PlacedImage(
     val y: Float,
     var width: Int,
     var height: Int,
-    val position: Int
+    val id: String
 )

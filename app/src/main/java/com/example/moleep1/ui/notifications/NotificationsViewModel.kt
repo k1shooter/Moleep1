@@ -28,6 +28,13 @@ class NotificationsViewModel : ViewModel() {
     val placedImages = MutableLiveData<MutableList<PlacedImage>>(mutableListOf())
 
 
+    fun removeImagesByProfileId(profileId: String) {
+        val currentList = placedImages.value.orEmpty()
+        // profileId가 일치하지 않는 이미지들만 남김
+        val filtered = currentList.filter { it.id != profileId }.toMutableList()
+        placedImages.value = filtered
+    }
+
     val offsetX = MutableLiveData(0f)
     val offsetY = MutableLiveData(0f)
     val scaleFactor = MutableLiveData(1f)
@@ -46,6 +53,7 @@ class NotificationsViewModel : ViewModel() {
     var currentStrokeWidth: Float=8f
 
     val placedTexts = MutableLiveData<MutableList<PlacedText>>(mutableListOf())
+
 
     fun addStroke(stroke: Stroke){
         val updated = strokes.value?: mutableListOf()
