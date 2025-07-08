@@ -8,6 +8,7 @@ data class EventItem(
     var eventName: String,
     var description: String,
     var photoUri: String? = null,
+    var eventTime: String? = null,
     val latitude: Double,
     val longitude: Double
 )

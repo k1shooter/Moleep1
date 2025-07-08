@@ -18,11 +18,16 @@ import com.example.moleep1.databinding.BottomSheetEventDetailBinding
 import com.example.moleep1.ui.added.AddedFragment
 import com.example.moleep1.ui.added.ImageUtils
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
+import com.google.android.material.timepicker.MaterialTimePicker
+import com.google.android.material.timepicker.TimeFormat
 import com.kakao.vectormap.LatLng
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.File
+import java.text.SimpleDateFormat
+import java.util.Calendar
+import java.util.Locale
 
 class EventDetailBottomSheet : BottomSheetDialogFragment() {
 
@@ -44,6 +49,8 @@ class EventDetailBottomSheet : BottomSheetDialogFragment() {
 
     private var tempSelectedUri: Uri? = null
     private var currentPhotoPath: String? = null
+
+    private var selectedTime: String? = null
 
     private val pickImageLauncher = registerForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
         uri?.let {
@@ -82,6 +89,9 @@ class EventDetailBottomSheet : BottomSheetDialogFragment() {
                 binding.etEventName.setText(event.eventName)
                 binding.etEventDescription.setText(event.description)
 
+                var selectedTime = event.eventTime
+                binding.tvEventTime.text = selectedTime ?: "시간 설정"
+
                 currentPhotoPath = event.photoUri
                 currentPhotoPath?.let { path ->
                     val file = File(path)
@@ -96,6 +106,9 @@ class EventDetailBottomSheet : BottomSheetDialogFragment() {
     private fun setupListeners() {
         binding.ivEventPhoto.setOnClickListener {
             pickImageLauncher.launch("image/*")
+        }
+        binding.tvEventTime.setOnClickListener {
+            showTimePicker()
         }
         binding.btnSave.setOnClickListener {
             val eventName = binding.etEventName.text.toString()
@@ -122,13 +135,34 @@ class EventDetailBottomSheet : BottomSheetDialogFragment() {
                     eventName,
                     binding.etEventDescription.text.toString(),
                     pinLatLng!!,
-                    newPath ?: currentPhotoPath // 새 경로가 우선, 없으면 기존 경로
+                    newPath ?: currentPhotoPath,
+                    selectedTime
                 )
 
                 dismiss()
             }
 
         }
+    }
+    private fun showTimePicker() {
+        val picker = MaterialTimePicker.Builder()
+            .setTimeFormat(TimeFormat.CLOCK_12H)
+            .setHour(12)
+            .setMinute(0)
+            .setTitleText("시간 선택")
+            .build()
+
+        picker.addOnPositiveButtonClickListener {
+            val calendar = Calendar.getInstance()
+            calendar.set(Calendar.HOUR_OF_DAY, picker.hour)
+            calendar.set(Calendar.MINUTE, picker.minute)
+
+            // "오후 5:30" 형식으로 포맷
+            val format = SimpleDateFormat("a h:mm", Locale.KOREA)
+            selectedTime = format.format(calendar.time)
+            binding.tvEventTime.text = selectedTime
+        }
+        picker.show(childFragmentManager, "time_picker")
     }
 
     override fun onDestroyView() {

@@ -57,7 +57,9 @@
                 android:layout_height="wrap_content"
                 android:text="시간 설정"
                 android:paddingTop="8dp"
-                android:textColor="@color/design_default_color_primary" />
+                android:paddingBottom="8dp"
+                android:textColor="@color/design_default_color_primary"
+                android:background="?attr/selectableItemBackground" />
         </LinearLayout>
     </LinearLayout>
 
