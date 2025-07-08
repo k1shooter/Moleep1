@@ -1,14 +1,7 @@
 package com.example.moleep1;
 
-import android.os.Bundle;
-
-import androidx.appcompat.app.AppCompatActivity;
 
 import java.io.Serializable;
-import java.util.UUID;
-
-import android.os.Parcelable;
-import kotlinx.parcelize.Parcelize;
 
 public class list_item implements Serializable {
     private String id;
@@ -42,7 +35,6 @@ public class list_item implements Serializable {
     }
 
     public void setName(String name) { this.name = name; }
-    public void setDesc(String desc) { this.desc = desc; }
     public void setImageUri(String imageUri) { this.imageuri = imageUri; }
     private static final long serialVersionUID = 1L;
 }

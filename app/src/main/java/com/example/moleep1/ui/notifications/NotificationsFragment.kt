@@ -1,32 +1,23 @@
 package com.example.moleep1.ui.notifications
 
-import android.content.Context
 import android.graphics.Color
 import android.os.Bundle
-import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.Button
 import android.widget.ListView
 import android.widget.TextView
 import androidx.core.view.GravityCompat
 import androidx.drawerlayout.widget.DrawerLayout
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
-import androidx.fragment.app.viewModels
 import androidx.lifecycle.ViewModelProvider
 import com.example.moleep1.ListViewAdapter
 import com.example.moleep1.databinding.FragmentNotificationsBinding
 import com.example.moleep1.R
 import com.example.moleep1.ui.DrawingView
 import com.example.moleep1.ui.home.HomeViewModel
-import android.graphics.Bitmap
-import android.graphics.ImageDecoder
-import android.graphics.drawable.Drawable
 import android.net.Uri
-import android.os.Build
-import android.provider.MediaStore
 import android.widget.EditText
 import android.widget.SeekBar
 import android.widget.Toast
@@ -46,18 +37,11 @@ import com.example.moleep1.ui.home.HomeViewModelFactory
 
 class NotificationsFragment : Fragment() {
 
-
-
-
-    private lateinit var adapter: ListViewAdapter
-
     private lateinit var imagePickerLauncher: ActivityResultLauncher<Intent>
     private var selectedImageUri: Uri? = null // 새로 선택된 이미지를 저장할 변수
 
     private var _binding: FragmentNotificationsBinding? = null
 
-    // This property is only valid between onCreateView and
-    // onDestroyView.
     private val binding get() = _binding!!
 
     private val viewModel: NotificationsViewModel by activityViewModels()
@@ -139,9 +123,6 @@ class NotificationsFragment : Fragment() {
         }
 
         viewModel.isPlacingGallery.observe(viewLifecycleOwner) { placing ->
-//            if(placing==false){
-//                viewModel.setGalleryClean()
-//            }
             drawingView.setPlacingGallery(placing)
         }
         viewModel.pendingGallery.observe(viewLifecycleOwner) { uri ->
@@ -158,7 +139,6 @@ class NotificationsFragment : Fragment() {
                 .setTitle("텍스트 추가")
                 .setView(editText)
                 .setPositiveButton("추가") { _, _ ->
-                    // 다음 터치 위치에 텍스트박스 추가 대기
                     drawingView.pendingText = editText.text.toString()
                     drawingView.isPlacingText = true
                 }
@@ -179,7 +159,6 @@ class NotificationsFragment : Fragment() {
                 homeViewModel.selectedItem.value = null
             } else {
                 drawingView.addProfileImage(null, "")
-                //homeViewModel.selectedItem.value = null
             }
         }
 
@@ -193,12 +172,6 @@ class NotificationsFragment : Fragment() {
         viewModel.pendingImageUri.observe(viewLifecycleOwner) { uri ->
             drawingView.setPendingImageUri(uri)
         }
-
-//        drawingView.setPlacingImage(false)
-//        drawingView.setPendingImageUri(null)
-//        drawingView.setPlacingGallery(false)
-//        drawingView.setPendingGallery(null)
-        //선택된 아이템이 바뀐다면?
     }
 
     override fun onCreateView(

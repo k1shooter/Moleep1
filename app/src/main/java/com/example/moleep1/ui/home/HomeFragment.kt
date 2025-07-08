@@ -1,19 +1,12 @@
 package com.example.moleep1.ui.home
 
 
-import android.content.Intent
-import android.net.Uri
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.ArrayAdapter
-import android.widget.Button
-import android.widget.ListView
-import android.widget.TextView
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
-import androidx.fragment.app.viewModels
 import androidx.lifecycle.ViewModelProvider
 import com.example.moleep1.HomeEdit
 import com.example.moleep1.ListViewAdapter
@@ -27,10 +20,6 @@ class HomeFragment : Fragment() {
 
     private var _binding: FragmentHomeBinding? = null
     private val binding get() = _binding!!
-
-    // ViewModel은 프래그먼트 생명주기 내내 유지되므로 여기서 초기화
-
-
     private lateinit var adapter: ListViewAdapter
 
     override fun onCreateView(
@@ -41,34 +30,26 @@ class HomeFragment : Fragment() {
         _binding = FragmentHomeBinding.inflate(inflater, container, false)
         val root: View = binding.root
 
-
         val factory = HomeViewModelFactory(PrefsManager(requireContext()))
         val homeViewModel = ViewModelProvider(requireActivity(), factory).get(HomeViewModel::class.java)
 
-        // 1. 어댑터 설정
-        adapter = ListViewAdapter(requireContext(), ArrayList()) // 처음엔 빈 리스트로 시작
+        adapter = ListViewAdapter(requireContext(), ArrayList())//커스텀 어댑터
         binding.listView.adapter = adapter
 
-        // 2. ViewModel의 데이터 변경 관찰 (★ observe는 한번만!)
         homeViewModel.itemList.observe(viewLifecycleOwner) { items ->
-            // 어댑터에 데이터 업데이트 (Adapter 내부에 데이터 교체 메소드가 있다고 가정)
-            // ex) adapter.updateData(items) 또는 adapter.submitList(items)
-            adapter.setItems(ArrayList(items)) // setItems가 데이터를 교체하는 메소드라고 가정
+            adapter.setItems(ArrayList(items))
             adapter.notifyDataSetChanged() // ListView는 notifyDataSetChanged()가 필요
-        }
+        }//viewmodel에 저장된 itemlist 변경 관찰(변경시 즉시 fragment 내 view에 반영)
 
 
-        // 3. 아이템 클릭 리스너 설정
         binding.listView.setOnItemClickListener { parent, view, position, id ->
             val selectedItem = homeViewModel.itemList.value?.get(position)
             if (selectedItem != null) {
-                // HomeEdit 다이얼로그 호출
                 HomeEdit(selectedItem, selectedItem.id)
                     .show(parentFragmentManager, "edit_dialog")
             }
-        }
+        }//listview 아이템 클릭 시
 
-// 1. 21개 이미지 리소스 ID 리스트
         val profileImages = listOf(
             R.drawable.pf1, R.drawable.pf2, R.drawable.pf3, R.drawable.pf4, R.drawable.pf5,
             R.drawable.pf6, R.drawable.pf7, R.drawable.pf8, R.drawable.pf9, R.drawable.pf10,
@@ -89,7 +70,6 @@ class HomeFragment : Fragment() {
             "자주 봄.", "싫어함.", "무서워함.", "포기함."
         )
 
-// 2. 초기 데이터 세팅 (앱 첫 실행 시)
         if (homeViewModel.itemList.value.isNullOrEmpty()) {
             val randomFirstName = firstNames.random()
             val randomLastName = lastNames.random()
@@ -104,9 +84,8 @@ class HomeFragment : Fragment() {
                 list_item(randomName, randomDesc, uriString)
             )
             homeViewModel.setList(initialData)
-        }
+        }//프로필이 비어 있다면 뷰 생성할 때 랜덤프로필 한개 넣어놓고 시작
 
-// 3. 프로필 추가 버튼 클릭 시 랜덤 이미지 적용
         binding.addprofilebutton.setOnClickListener {
             val randomFirstName = firstNames.random()
             val randomLastName = lastNames.random()
@@ -118,14 +97,13 @@ class HomeFragment : Fragment() {
             val uriString = "android.resource://${requireContext().packageName}/$randomResId"
             homeViewModel.addItem(list_item(randomName, randomDesc, uriString))
             binding.listView.smoothScrollToPosition(adapter.count - 1)
-        }
+        }//랜덤 프로필 적용(프로필 추가)
 
         binding.clearAllButton.setOnClickListener {
             homeViewModel.clearAllProfiles()
-            // 그림판 등 연동 데이터도 있으면 같이 초기화
             val notiviewModel: NotificationsViewModel by activityViewModels()
             notiviewModel.clearAllPlacedImages()
-        }
+        }//homeviewmodel의 profiles data, nofificationviewmodel의 placedimages data 다 날리기
 
         return root
     }

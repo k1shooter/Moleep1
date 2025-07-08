@@ -1,6 +1,12 @@
 package com.example.moleep1.ui.notifications
 
+import android.content.Context
+import android.graphics.Bitmap
+import android.graphics.ImageDecoder
 import android.graphics.Path
+import android.net.Uri
+import android.os.Build
+import android.provider.MediaStore
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
@@ -11,14 +17,6 @@ class NotificationsViewModel : ViewModel() {
         value = "This is notifications Fragment"
     }
     val text: LiveData<String> = _text
-
-    val paths = MutableLiveData<MutableList<Path>>(mutableListOf())
-
-    fun addPath(path: Path) {
-        val updated = paths.value ?: mutableListOf()
-        updated.add(path)
-        paths.value = updated
-    }
 
 
     val isPlacingImage = MutableLiveData<Boolean>(false)
@@ -34,30 +32,11 @@ class NotificationsViewModel : ViewModel() {
         isPlacingGallery.value = placing
     }
 
-    fun setGalleryClean() {
-        isPlacingGallery.value = false
-        pendingGallery.value = null
-    }
 
     val placedGalleries = MutableLiveData<MutableList<PlacedGallery>>(mutableListOf())
 
-    fun addPlacedGallery(gallery: PlacedGallery) {
-        val updated = placedGalleries.value ?: mutableListOf()
-        updated.add(gallery)
-        placedGalleries.value = updated
-    }
 
-    fun removePlacedGallery(index: Int) {
-        val updated = placedGalleries.value ?: mutableListOf()
-        if (index in updated.indices) {
-            updated.removeAt(index)
-            placedGalleries.value = updated
-        }
-    }
 
-    fun clearPlacedGalleries() {
-        placedGalleries.value = mutableListOf()
-    }
 
     val strokes = MutableLiveData<MutableList<Stroke>>(mutableListOf())
     val placedImages = MutableLiveData<MutableList<PlacedImage>>(mutableListOf())
@@ -65,7 +44,6 @@ class NotificationsViewModel : ViewModel() {
 
     fun removeImagesByProfileId(profileId: String) {
         val currentList = placedImages.value.orEmpty()
-        // profileId가 일치하지 않는 이미지들만 남김
         val filtered = currentList.filter { it.id != profileId }.toMutableList()
         placedImages.value = filtered
     }
@@ -76,16 +54,6 @@ class NotificationsViewModel : ViewModel() {
 
     val offsetX = MutableLiveData(0f)
     val offsetY = MutableLiveData(0f)
-    val scaleFactor = MutableLiveData(1f)
-
-    fun setOffset(x: Float, y: Float) {
-        offsetX.value = x
-        offsetY.value = y
-    }
-
-    fun setScale(factor: Float) {
-        scaleFactor.value = factor
-    }
 
 
     var currentColor: Int=0xFF000000.toInt()
@@ -100,11 +68,33 @@ class NotificationsViewModel : ViewModel() {
         strokes.value=updated
     }
 
-    fun addPlacedImages(image: PlacedImage){
-        val updated = placedImages.value?: mutableListOf()
-        updated.add(image)
-        placedImages.value=updated
+
+    fun uriToBitmap(context: Context, uriString: String): Bitmap? {
+        val uri = Uri.parse(uriString)
+        return try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+                val source = ImageDecoder.createSource(context.contentResolver, uri)
+                ImageDecoder.decodeBitmap(source)
+            } else {
+                MediaStore.Images.Media.getBitmap(context.contentResolver, uri)
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+            null
+        }
     }
+
+    fun updatePlacedImageBitmapById(targetId: String, newUri: String, context: Context) {
+        placedImages.value = placedImages.value?.map { placedImage ->
+            if (placedImage.id == targetId) {
+                val newBitmap = uriToBitmap(context, newUri)
+                placedImage.copy(
+                    bitmap = newBitmap ?: placedImage.bitmap
+                )
+            } else placedImage
+        } as MutableList<PlacedImage>?
+    }
+
 
     fun setColor(color: Int){
         currentColor=color

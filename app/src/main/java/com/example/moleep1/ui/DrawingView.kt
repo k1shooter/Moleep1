@@ -38,7 +38,6 @@ class DrawingView(context: Context, attrs: AttributeSet?) : View(context,attrs) 
 
 
     private var pendingImage: Bitmap? = null
-    private var pendingPosition: Int = 0
     private var pendingId: String? = null
     private var pendingImageWidth = 200
     private var pendingImageHeight = 200
@@ -67,19 +66,6 @@ class DrawingView(context: Context, attrs: AttributeSet?) : View(context,attrs) 
         val canvas = Canvas(bitmap)
         view.draw(canvas)
         return bitmap
-    }
-    fun saveBitmapToFile(context: Context, bitmap: Bitmap, fileName: String): Boolean {
-        return try {
-            val file = File(context.getExternalFilesDir(null), fileName)
-            val outputStream = FileOutputStream(file)
-            bitmap.compress(Bitmap.CompressFormat.PNG, 100, outputStream)
-            outputStream.flush()
-            outputStream.close()
-            true
-        } catch (e: IOException) {
-            e.printStackTrace()
-            false
-        }
     }
 
     fun saveBitmapToGallery(context: Context, bitmap: Bitmap, title: String): Boolean {
@@ -218,7 +204,6 @@ class DrawingView(context: Context, attrs: AttributeSet?) : View(context,attrs) 
     var offsetY = 0f
     private var lastPanX = 0f
     private var lastPanY = 0f
-    private var isPanning = false
     //패닝
 
     var isPanMode = false
@@ -231,12 +216,8 @@ class DrawingView(context: Context, attrs: AttributeSet?) : View(context,attrs) 
     }
 
 
-    private val textureBitmap = BitmapFactory.decodeResource(resources, R.drawable.boardtex)
 
     override fun onDraw(canvas: Canvas) {
-        // 1. 텍스처로 캔버스 전체 채우기
-
-        // 2. 그 위에 기존의 그림, 이미지, 텍스트 등 원하는 요소를 그리기
         super.onDraw(canvas)
 
         val centerX=width/2f
@@ -418,7 +399,6 @@ class DrawingView(context: Context, attrs: AttributeSet?) : View(context,attrs) 
             }
 
             scaleGestureDetector.onTouchEvent(event)
-            //if(event.pointerCount>1) return true
 
             if(isPanMode){
                 val sensitivity=1.5f
@@ -523,7 +503,4 @@ class DrawingView(context: Context, attrs: AttributeSet?) : View(context,attrs) 
 
     }
 
-//    fun setPanMode(enabled: Boolean){
-//        isPanMode = enabled
-//    }
 }

@@ -17,8 +17,6 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
 
 
-        //val db = AppDatabase.getDatabase(this)
-
 
 
 

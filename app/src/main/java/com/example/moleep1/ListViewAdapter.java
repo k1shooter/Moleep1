@@ -38,9 +38,6 @@ public class ListViewAdapter extends BaseAdapter {
         return list.get(position);
     }
 
-    public int getPosition(list_item item) {
-        return list.indexOf(item);
-    }
 
     @Override
     public View getView(int position, View convertView, ViewGroup parent) {
@@ -62,11 +59,6 @@ public class ListViewAdapter extends BaseAdapter {
         return view;
     }
 
-    public void updateData(ArrayList<list_item> newList) {
-        list.clear();
-        list.addAll(newList);
-        notifyDataSetChanged();
-    }
 
     public void setItems(ArrayList<list_item> newItems) {
         list.clear();           // 기존 목록 비움

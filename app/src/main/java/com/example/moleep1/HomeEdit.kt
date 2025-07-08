@@ -15,7 +15,6 @@ import androidx.core.net.toUri
 import androidx.fragment.app.DialogFragment
 import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.ViewModelProvider
-import com.example.moleep1.ui.DrawingView
 import com.example.moleep1.ui.PrefsManager
 import com.example.moleep1.ui.home.HomeViewModel
 import com.example.moleep1.ui.home.HomeViewModelFactory
@@ -73,16 +72,12 @@ class HomeEdit(
                 // 새로 선택된 이미지가 있으면 그 URI를, 없으면 기존 URI를 사용
                 val finalImageUriString = selectedImageUri?.toString() ?: item.imageUri
 
-                val updatedItem = list_item(
-                    titleEdit.text.toString(),
-                    descEdit.text.toString(),
-                    finalImageUriString // 수정한 URI로 객체 생성
-                )
-
                 item.imageUri=finalImageUriString
                 item.desc=descEdit.text.toString()
                 item.name=titleEdit.text.toString()
                 viewModel.updateItem(id, item)
+                val notiviewModel: NotificationsViewModel by activityViewModels()
+                notiviewModel.updatePlacedImageBitmapById(id,finalImageUriString, context = requireContext())
             }
             .setNeutralButton("Delete") { _, _ -> // ★★★ 삭제 버튼 추가 ★★★
                 viewModel.removeItem(id)

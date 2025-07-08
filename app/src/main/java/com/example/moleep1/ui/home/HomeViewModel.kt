@@ -21,18 +21,15 @@ class HomeViewModel(private val prefsManager: PrefsManager) : ViewModel() {
     val itemList: LiveData<MutableList<list_item>> = _itemList
 
     val selectedItem = MutableLiveData<list_item>()
-    private val _viewedItem = MutableLiveData<list_item?>()
-    val viewedItem: LiveData<list_item?> get() = _viewedItem
 
     fun selectItem(item: list_item) {
         selectedItem.value = item
     }
 
     fun addItem(item: list_item) {
-        // 기존 리스트를 복사하여 새로운 리스트를 만듦
         val newList = _itemList.value.orEmpty().toMutableList()
         newList.add(item)
-        _itemList.value = newList // 새 리스트를 할당
+        _itemList.value = newList
         prefsManager.saveItemList(newList)
     }
 
@@ -51,20 +48,8 @@ class HomeViewModel(private val prefsManager: PrefsManager) : ViewModel() {
         val newList = currentList.filter { it.id != id }
         _itemList.value = newList.toMutableList()
         prefsManager.saveItemList(newList)
-
-        // 2. 그림판 오브젝트도 해당 id로 삭제 (예: PlacedImage.profileId와 일치)
-
     }
 
-    fun selectItemByPosition(position: Int) {
-        val currentList = _itemList.value.orEmpty().toMutableList()
-        _viewedItem.value = currentList[position]
-    }
-
-    fun selectItemById(id: String) {
-        val item = _itemList.value?.find { it.id == id }
-        _viewedItem.value = item // item이 null이어도 OK
-    }
 
 
     fun setList(newList: List<list_item>) {
@@ -72,12 +57,8 @@ class HomeViewModel(private val prefsManager: PrefsManager) : ViewModel() {
         prefsManager.saveItemList(_itemList.value?:mutableListOf())
     }
 
-    fun saveAll() {
-        _itemList.value?.let { prefsManager.saveItemList(it) }
-    }
-
     fun clearAllProfiles() {
-        _itemList.value = mutableListOf() // 리스트를 완전히 비움
-        prefsManager.saveItemList(emptyList()) // SharedPreferences도 초기화
+        _itemList.value = mutableListOf() // 리스트 초기화
+        prefsManager.saveItemList(emptyList()) // SharedPreferences 초기화
     }
 }
