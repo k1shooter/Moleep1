@@ -31,6 +31,7 @@ import kotlinx.coroutines.withContext
 import java.io.File
 import java.text.SimpleDateFormat
 import java.util.Calendar
+import java.util.Date
 import java.util.Locale
 
 class EventDetailBottomSheet : BottomSheetDialogFragment() {
@@ -54,7 +55,7 @@ class EventDetailBottomSheet : BottomSheetDialogFragment() {
     private var tempSelectedUri: Uri? = null
     private var currentPhotoPath: String? = null
 
-    private var selectedTime: String? = null
+    private var selectedTime: Long? = null
 
     private val homeViewModel: HomeViewModel by activityViewModels() // HomeViewModel 가져오기
     private lateinit var personAdapter: PersonAdapter
@@ -113,8 +114,8 @@ class EventDetailBottomSheet : BottomSheetDialogFragment() {
                 binding.etEventName.setText(event.eventName)
                 binding.etEventDescription.setText(event.description)
 
-                var selectedTime = event.eventTime
-                binding.tvEventTime.text = selectedTime ?: "시간 설정"
+                selectedTime = event.eventTime
+                binding.tvEventTime.text = formatTimestamp(selectedTime) ?: "시간 설정"
 
                 selectedAttendeeIds.clear()
                 event.attendeeIds?.let { ids -> // null이 아닐 때만 이 블록이 실행됨
@@ -214,10 +215,16 @@ class EventDetailBottomSheet : BottomSheetDialogFragment() {
 
             // "오후 5:30" 형식으로 포맷
             val format = SimpleDateFormat("a h:mm", Locale.KOREA)
-            selectedTime = format.format(calendar.time)
-            binding.tvEventTime.text = selectedTime
+            selectedTime = calendar.timeInMillis
+            binding.tvEventTime.text = formatTimestamp(selectedTime)
         }
         picker.show(childFragmentManager, "time_picker")
+    }
+
+    private fun formatTimestamp(timestamp: Long?): String? {
+        if (timestamp == null) return null
+        val format = SimpleDateFormat("a h:mm", Locale.KOREA)
+        return format.format(Date(timestamp))
     }
 
     override fun onDestroyView() {
