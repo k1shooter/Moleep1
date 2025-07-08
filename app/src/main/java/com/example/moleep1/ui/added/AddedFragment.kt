@@ -55,11 +55,11 @@ class AddedFragment : Fragment() {
     // --- 초기 설정 함수 ---
     private fun setupPathUI() {
         pathPersonAdapter = PathPersonAdapter { person ->
-            // 인물 리스트에서 특정 인물을 클릭했을 때의 동작
-            mapPinManager?.clearAllPaths() // 기존에 그려진 동선이 있다면 삭제
+            // 인물 클릭 시, ViewModel에 경로 탐색을 '요청'만 함
             val events = viewModel.getEventsForAttendee(person.id)
-            mapPinManager?.drawPathForEvents(events) // 선택된 인물의 동선 그리기
-            binding.cardViewPersonList.visibility = View.GONE // 인물 리스트 숨기기
+            viewModel.findRoutePathForEvents(events)
+
+            binding.cardViewPersonList.visibility = View.GONE
         }
         binding.rvPathPersonList.adapter = pathPersonAdapter
     }
@@ -129,6 +129,13 @@ class AddedFragment : Fragment() {
         // 4. 핀 삭제 Observer (핀 하나만 삭제)
         viewModel.pinDeleted.observe(viewLifecycleOwner) { event ->
             event.getContentIfNotHandled()?.let { eventId -> mapPinManager?.removePinByEventId(eventId) }
+        }
+
+        viewModel.routePath.observe(viewLifecycleOwner) { event ->
+            event.getContentIfNotHandled()?.let { path ->
+                mapPinManager?.clearAllPaths() // 기존 동선 지우기
+                mapPinManager?.drawPath(path)  // 새 동선 그리기
+            }
         }
     }
 

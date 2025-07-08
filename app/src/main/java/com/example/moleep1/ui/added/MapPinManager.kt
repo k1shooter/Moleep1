@@ -136,6 +136,17 @@ class MapPinManager(private val context: Context, private val kakaoMap: KakaoMap
         }
     }
 
+    fun drawPath(path: List<LatLng>) {
+        if (path.isEmpty()) return
+
+        val mapPoints = MapPoints.fromLatLng(path)
+        val options = PolylineOptions.from(mapPoints, 10f, Color.MAGENTA)
+
+        kakaoMap.shapeManager?.layer?.addPolyline(options)?.let {
+            polylines.add(it)
+        }
+    }
+
     fun clearAllPaths() {
         polylines.forEach { it.remove() }
         polylines.clear()
