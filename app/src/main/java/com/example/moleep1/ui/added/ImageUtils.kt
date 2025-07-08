@@ -1,4 +1,4 @@
-// com/example/moleep1/ui/added/ImageUtils.kt
+// com.example.moleep1.ui.added.ImageUtils.kt
 
 package com.example.moleep1.ui.added
 
@@ -7,6 +7,9 @@ import android.graphics.*
 import android.net.Uri
 import android.os.Build
 import android.provider.MediaStore
+import java.io.File
+import java.io.FileOutputStream
+import java.util.UUID
 
 object ImageUtils {
 
@@ -24,9 +27,6 @@ object ImageUtils {
         }
     }
 
-    /**
-     * [수정] Bitmap 이미지를 중앙 기준으로 정사각형으로 먼저 자른 후, 원형으로 만듭니다.
-     */
     fun cropToCircle(bitmap: Bitmap): Bitmap {
         // 1. 이미지를 정사각형으로 먼저 자르기
         val squareBitmap = if (bitmap.width == bitmap.height) {
@@ -54,5 +54,23 @@ object ImageUtils {
 
     fun resizeBitmap(bitmap: Bitmap, width: Int, height: Int): Bitmap {
         return Bitmap.createScaledBitmap(bitmap, width, height, false)
+    }
+    fun copyImageToInternalStorage(context: Context, sourceUri: Uri): String? {
+        return try {
+            val inputStream = context.contentResolver.openInputStream(sourceUri) ?: return null
+            val imageDir = File(context.filesDir, "images")
+            if (!imageDir.exists()) {
+                imageDir.mkdir()
+            }
+            val fileName = "${UUID.randomUUID()}.jpg"
+            val file = File(imageDir, fileName)
+            FileOutputStream(file).use { outputStream ->
+                inputStream.use { it.copyTo(outputStream) }
+            }
+            file.absolutePath
+        } catch (e: Exception) {
+            e.printStackTrace()
+            null
+        }
     }
 }

@@ -1,4 +1,5 @@
-package com.example.moleep1.ui.added // 사용자의 패키지명
+// com.example.moleep1.ui.added.MapCaptureHelper.kt
+package com.example.moleep1.ui.added
 
 import android.content.ContentValues
 import android.content.Context
