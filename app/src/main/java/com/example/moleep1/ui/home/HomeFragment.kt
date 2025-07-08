@@ -20,13 +20,16 @@ import com.example.moleep1.ListViewAdapter
 import com.example.moleep1.R
 import com.example.moleep1.databinding.FragmentHomeBinding
 import com.example.moleep1.list_item
+import com.example.moleep1.ui.PrefsManager
+
 class HomeFragment : Fragment() {
 
     private var _binding: FragmentHomeBinding? = null
     private val binding get() = _binding!!
 
     // ViewModel은 프래그먼트 생명주기 내내 유지되므로 여기서 초기화
-    private val homeViewModel: HomeViewModel by activityViewModels()
+
+
     private lateinit var adapter: ListViewAdapter
 
     override fun onCreateView(
@@ -36,6 +39,10 @@ class HomeFragment : Fragment() {
     ): View {
         _binding = FragmentHomeBinding.inflate(inflater, container, false)
         val root: View = binding.root
+
+        val prefsManager = PrefsManager(requireContext())
+        val factory = HomeViewModelFactory(prefsManager)
+        val homeViewModel = ViewModelProvider(this, factory).get(HomeViewModel::class.java)
 
         // 1. 어댑터 설정
         adapter = ListViewAdapter(requireContext(), ArrayList()) // 처음엔 빈 리스트로 시작

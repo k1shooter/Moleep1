@@ -4,8 +4,9 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import com.example.moleep1.list_item
+import com.example.moleep1.ui.PrefsManager
 
-class HomeViewModel : ViewModel() {
+class HomeViewModel(private val prefsManager: PrefsManager) : ViewModel() {
 
     private val _text = MutableLiveData<String>().apply {
         value = "This is home Fragment"
@@ -14,8 +15,9 @@ class HomeViewModel : ViewModel() {
 
 
     private val _itemList = MutableLiveData<MutableList<list_item>>().apply {
-        value = mutableListOf()
+        value = prefsManager.loadItemList()
     }
+
     val itemList: LiveData<MutableList<list_item>> = _itemList
 
     val selectedItem = MutableLiveData<list_item>()
@@ -30,6 +32,7 @@ class HomeViewModel : ViewModel() {
         val newList = _itemList.value.orEmpty().toMutableList()
         newList.add(item)
         _itemList.value = newList // 새 리스트를 할당
+        prefsManager.saveItemList(newList)
     }
 
     fun updateItem(position: Int, newItem: list_item) {
@@ -37,6 +40,7 @@ class HomeViewModel : ViewModel() {
         if (position in currentList.indices) {
             currentList[position] = newItem
             _itemList.value = currentList // 새 리스트를 할당
+            prefsManager.saveItemList(currentList)
         }
     }
 
@@ -45,21 +49,13 @@ class HomeViewModel : ViewModel() {
         viewedItem.value = currentList[position]
     }
 
-    fun selectItemById(id : String?) {
-        val currentList = _itemList.value.orEmpty().toMutableList()
-        val found = currentList.find { it.id == id }
-        viewedItem.value = found
-    }
 
     fun setList(newList: List<list_item>) {
         _itemList.value = newList.toMutableList()
+        prefsManager.saveItemList(_itemList.value?:mutableListOf())
     }
 
-    fun removeItem(position: Int) {
-        val currentList = _itemList.value?.toMutableList() ?: return
-        if (position in currentList.indices) {
-            currentList.removeAt(position)
-            _itemList.value = currentList
-        }
+    fun saveAll() {
+        _itemList.value?.let { prefsManager.saveItemList(it) }
     }
 }

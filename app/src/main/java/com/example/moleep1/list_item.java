@@ -10,18 +10,12 @@ import java.util.UUID;
 import android.os.Parcelable;
 import kotlinx.parcelize.Parcelize;
 
-@Parcelize
-public class list_item extends AppCompatActivity implements Serializable {
+public class list_item implements Serializable {
     private String id;
     public String name;
     public String desc;
     public String imageuri;
 
-    @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_list_item);
-    }
 
     public list_item(String id, String name, String desc, String imageUri) {
         this.id = id;

@@ -36,14 +36,15 @@ import android.Manifest
 import android.content.pm.PackageManager
 import android.widget.ImageButton
 import androidx.core.content.ContextCompat
-
+import com.example.moleep1.ui.PrefsManager
+import com.example.moleep1.ui.home.HomeViewModelFactory
 
 
 class NotificationsFragment : Fragment() {
 
 
 
-    private val homeViewModel: HomeViewModel by activityViewModels()
+
     private lateinit var adapter: ListViewAdapter
 
 
@@ -62,6 +63,10 @@ class NotificationsFragment : Fragment() {
         val btnAddText=view.findViewById<ImageButton>(R.id.btnAddText)
         val listView=view.findViewById<ListView>(R.id.listView)
         val drawingView=view.findViewById<DrawingView>(R.id.drawingView)
+
+        val prefsManager = PrefsManager(requireContext())
+        val factory = HomeViewModelFactory(prefsManager)
+        val homeViewModel = ViewModelProvider(this, factory).get(HomeViewModel::class.java)
 
         val adapter = ListViewAdapter(requireContext(), ArrayList(homeViewModel.itemList.value?: emptyList()))
         listView.adapter=adapter
@@ -158,6 +163,9 @@ class NotificationsFragment : Fragment() {
         val binding = _binding!!
         //val root=inflater.inflate(R.layout.fragment_notifications, container, false)
         val drawingView=binding.drawingView
+        val prefsManager = PrefsManager(requireContext())
+        val factory = HomeViewModelFactory(prefsManager)
+        val homeViewModel = ViewModelProvider(this, factory).get(HomeViewModel::class.java)
 
         drawingView.onImageSelectedListener = { img ->
             homeViewModel.selectItemByPosition(img.position)
