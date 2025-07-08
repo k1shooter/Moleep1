@@ -54,6 +54,15 @@
                 android:layout_margin="8dp"/>
 
             <ImageButton
+                android:id="@+id/btnAddGallery"
+                android:layout_width="65dp"
+                android:layout_height="45dp"
+                android:layout_weight="1"
+                android:src="@drawable/gall"
+                android:layout_gravity="center|top"
+                android:layout_margin="8dp"/>
+
+            <ImageButton
                 android:id="@+id/btnOpenSidebar"
                 android:layout_width="65dp"
                 android:layout_height="45dp"

@@ -5,7 +5,6 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:layout_marginBottom="50dp"
     tools:context=".ui.dashboard.DashboardFragment">
 
     <androidx.recyclerview.widget.RecyclerView
@@ -21,13 +20,18 @@
         app:layout_constraintVertical_bias="0.0"
         app:spanCount="3"
         tools:listitem="@layout/item_gallery_image" />
+
     <Button
         android:id="@+id/addImageButton"
-        android:layout_width="wrap_content"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:text="@string/add_image"
-        app:layout_constraintTop_toTopOf="parent"
+        android:paddingBottom="60dp"
+        android:backgroundTint="#393836"
+        app:rippleColor="#000"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent" />
+        android:layout_margin="3dp" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

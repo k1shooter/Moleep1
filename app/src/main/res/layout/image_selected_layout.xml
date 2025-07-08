@@ -3,7 +3,8 @@
     android:orientation="vertical"
     android:padding="24dp"
     android:layout_width="match_parent"
-    android:layout_height="wrap_content">
+    android:layout_height="wrap_content"
+    android:background="@drawable/radiusback">
 
     <TextView
         android:id="@+id/tvProfileInfo"
@@ -20,8 +21,8 @@
 
     <SeekBar
         android:id="@+id/seekBarSize"
-        android:layout_width="match_parent"
+        android:layout_width="250dp"
         android:layout_height="wrap_content"
-        android:max="400"
+        android:max="800"
         android:progress="200"/>
 </LinearLayout>

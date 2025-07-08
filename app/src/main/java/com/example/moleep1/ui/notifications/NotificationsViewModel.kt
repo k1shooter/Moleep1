@@ -24,6 +24,41 @@ class NotificationsViewModel : ViewModel() {
     val isPlacingImage = MutableLiveData<Boolean>(false)
     val pendingImageUri = MutableLiveData<String?>(null)
 
+    val isPlacingGallery = MutableLiveData<Boolean>(false)
+    val pendingGallery = MutableLiveData<String?>(null)
+
+    fun setPendingGallery(uri: String?) {
+        pendingGallery.value = uri
+    }
+    fun setIsPlacingGallery(placing: Boolean) {
+        isPlacingGallery.value = placing
+    }
+
+    fun setGalleryClean() {
+        isPlacingGallery.value = false
+        pendingGallery.value = null
+    }
+
+    val placedGalleries = MutableLiveData<MutableList<PlacedGallery>>(mutableListOf())
+
+    fun addPlacedGallery(gallery: PlacedGallery) {
+        val updated = placedGalleries.value ?: mutableListOf()
+        updated.add(gallery)
+        placedGalleries.value = updated
+    }
+
+    fun removePlacedGallery(index: Int) {
+        val updated = placedGalleries.value ?: mutableListOf()
+        if (index in updated.indices) {
+            updated.removeAt(index)
+            placedGalleries.value = updated
+        }
+    }
+
+    fun clearPlacedGalleries() {
+        placedGalleries.value = mutableListOf()
+    }
+
     val strokes = MutableLiveData<MutableList<Stroke>>(mutableListOf())
     val placedImages = MutableLiveData<MutableList<PlacedImage>>(mutableListOf())
 

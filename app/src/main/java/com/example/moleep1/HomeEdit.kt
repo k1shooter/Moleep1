@@ -65,8 +65,8 @@ class HomeEdit(
         }
 
 
-        return AlertDialog.Builder(requireContext())
-            .setTitle("Edit item")
+        return AlertDialog.Builder(requireContext(), R.style.CustomDialog)
+            .setTitle("Profile Edit")
             .setView(view)
             .setPositiveButton("Save") { _, _ ->
                 // ★★★ 이 부분 로직 수정 ★★★
@@ -78,7 +78,11 @@ class HomeEdit(
                     descEdit.text.toString(),
                     finalImageUriString // 수정한 URI로 객체 생성
                 )
-                viewModel.updateItem(id, updatedItem)
+
+                item.imageUri=finalImageUriString
+                item.desc=descEdit.text.toString()
+                item.name=titleEdit.text.toString()
+                viewModel.updateItem(id, item)
             }
             .setNeutralButton("Delete") { _, _ -> // ★★★ 삭제 버튼 추가 ★★★
                 viewModel.removeItem(id)
@@ -87,5 +91,6 @@ class HomeEdit(
             }
             .setNegativeButton("Cancel", null)
             .create()
+        dialog?.window?.setBackgroundDrawableResource(android.R.color.transparent)
     }
 }
