@@ -32,6 +32,7 @@ android {
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         buildConfigField("String", "KAKAO_MAP_KEY", "\"${properties.getProperty("KAKAO_MAP_KEY")}\"")
+        buildConfigField("String", "KAKAO_REST_API_KEY", "\"${properties.getProperty("KAKAO_REST_API_KEY")}\"")
 
 
     }
@@ -82,4 +83,7 @@ dependencies {
     implementation(libs.kotlinx.coroutines.core)
     implementation(libs.kotlinx.coroutines.android)
     implementation(libs.androidx.lifecycle.runtime.ktx)
+    implementation(libs.retrofit.v290)
+    implementation(libs.converter.gson)
+    implementation(libs.logging.interceptor.v4110)
 }

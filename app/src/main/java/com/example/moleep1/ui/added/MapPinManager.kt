@@ -1,6 +1,7 @@
 package com.example.moleep1.ui.added
 
 import android.content.Context
+import android.graphics.Color
 import android.net.Uri
 import android.util.Log
 import com.example.moleep1.R
@@ -8,7 +9,11 @@ import com.example.moleep1.ui.added.event.*
 import com.kakao.vectormap.*
 import com.kakao.vectormap.camera.CameraUpdateFactory
 import com.kakao.vectormap.label.*
+import com.kakao.vectormap.shape.MapPoints
+import com.kakao.vectormap.shape.Polyline
+import com.kakao.vectormap.shape.PolylineOptions
 import java.io.File
+
 
 class MapPinManager(private val context: Context, private val kakaoMap: KakaoMap) {
 
@@ -19,6 +24,8 @@ class MapPinManager(private val context: Context, private val kakaoMap: KakaoMap
     // ❗ [수정] onPinClickListener가 Label과 String(eventId) 두 파라미터를 받도록 타입을 변경합니다.
     var onMapTappedListener: ((LatLng) -> Unit)? = null
     var onPinClickListener: ((Label, String) -> Unit)? = null
+
+    private val polylines = mutableListOf<Polyline>()
 
     private val pinStyle = kakaoMap.labelManager!!.addLabelStyles(
         LabelStyles.from(LabelStyle.from(R.drawable.pin_icon_128))
@@ -113,6 +120,25 @@ class MapPinManager(private val context: Context, private val kakaoMap: KakaoMap
         kakaoMap.labelManager?.getLayer()?.removeAll()
         labelToEventIdMap.clear()
         eventToLabelIdMap.clear()
+    }
+
+    fun drawPathForEvents(events: List<EventItem>) {
+        if (events.size < 2) return
+
+        val latLngList = events.map { LatLng.from(it.latitude, it.longitude) }
+        val mapPoints = MapPoints.fromLatLng(latLngList)
+
+        // ❗ [수정] from() 함수에 두께와 색상을 파라미터로 직접 전달합니다.
+        val options = PolylineOptions.from(mapPoints, 10f, Color.MAGENTA)
+
+        kakaoMap.shapeManager?.layer?.addPolyline(options)?.let {
+            polylines.add(it)
+        }
+    }
+
+    fun clearAllPaths() {
+        polylines.forEach { it.remove() }
+        polylines.clear()
     }
 
     fun moveCamera(position: LatLng, zoomLevel: Int = 15) {
