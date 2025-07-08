@@ -2,10 +2,10 @@
 <resources>
 
     <style name="Widget.BottomNavigationView.Custom" parent="Widget.MaterialComponents.BottomNavigationView.Colored">
-        <item name="itemIconTint">@color/white</item>
-        <item name="itemTextColor">@color/white</item>
+        <item name="itemIconTint">@color/sig</item>
+        <item name="itemTextColor">@color/sig</item>
 <!--        <item name="backgroundTint">@color/purple_200</item>-->
-        <item name="android:background">@drawable/aaa</item>
+        <item name="android:background">@drawable/bottomback</item>
     </style>
 
     <style name="CustomDialog" parent="Theme.AppCompat.Dialog">
