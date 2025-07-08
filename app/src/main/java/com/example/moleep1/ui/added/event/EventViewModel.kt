@@ -20,30 +20,33 @@ class EventViewModel(private val eventManager: EventManager) : ViewModel() {
         return _eventList.value?.find { it.eventId == eventId }
     }
 
-    // ❗ [수정] 이벤트 추가/수정 로직 변경
-    fun addOrUpdateEvent(eventId: String?, name: String, desc: String, latLng: LatLng): EventItem {
+    fun addOrUpdateEvent(eventId: String?, name: String, desc: String, latLng: LatLng, photoUri: String?): EventItem {
         val currentList = _eventList.value ?: mutableListOf()
         val existingEvent = if (eventId != null) findEventById(eventId) else null
 
+        val savedEvent: EventItem
         if (existingEvent != null) {
-            // 업데이트
             existingEvent.eventName = name
             existingEvent.description = desc
-            _eventList.value = currentList
-            eventManager.saveEventList(currentList)
-            return existingEvent
+            // 사진 경로가 null이 아니면 업데이트 (사진을 지우는 경우는 아직 미구현)
+            if (photoUri != null) {
+                existingEvent.photoUri = photoUri
+            }
+            savedEvent = existingEvent
         } else {
-            // 새로 추가
             val newEvent = EventItem(
-                eventName = name,
-                description = desc,
-                latitude = latLng.latitude,
-                longitude = latLng.longitude
+                eventName = name, description = desc,
+                latitude = latLng.latitude, longitude = latLng.longitude,
+                photoUri = photoUri
             )
             currentList.add(newEvent)
-            _eventList.value = currentList
-            eventManager.saveEventList(currentList)
-            return newEvent
+            savedEvent = newEvent
         }
+
+        // ❗ [확인] 이 코드가 있어야 UI가 즉시 갱신됩니다.
+        _eventList.value = currentList.toMutableList()
+
+        eventManager.saveEventList(currentList)
+        return savedEvent
     }
 }

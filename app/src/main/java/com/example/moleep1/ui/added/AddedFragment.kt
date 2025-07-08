@@ -65,12 +65,8 @@ class AddedFragment : Fragment() {
             }
         }
         binding.btnCapture.setOnClickListener {
-            // MapCaptureHelper 인스턴스 생성
             val captureHelper = MapCaptureHelper()
-            // 캡처 함수 호출
             captureHelper.captureMapAndSaveToGallery(requireContext(), mapView) { isSuccess, uri ->
-                // 캡처 완료 후 결과에 따라 Toast 메시지 표시
-                // MapCaptureHelper 내부에서도 Toast를 보여주므로 이 부분은 생략하거나 로그로 대체해도 됩니다.
                 activity?.runOnUiThread {
                     if (isSuccess) {
                         Log.d("AddedFragment", "캡처 성공. 이미지 Uri: $uri")
@@ -111,42 +107,23 @@ class AddedFragment : Fragment() {
 
     private fun initializeMapManager(kakaoMap: KakaoMap) {
         mapPinManager = MapPinManager(requireContext(), kakaoMap).apply {
-            // ❗ [수정] 클릭 리스너: label과 함께 영구 eventId를 받음
-            onPinClickListener = { clickedLabel, eventId ->
-                showEventDetailSheetForExisting(eventId, clickedLabel.position)
-            }
-            // ❗ [수정] 추가 리스너: 새로 생성된 Label 객체를 받음
-            onPinAddedListener = { newLabel ->
+            // ❗ [수정] 새 리스너 설정: 지도를 탭하면 BottomSheet를 연다.
+            onMapTappedListener = { latLng ->
                 binding.btnAddPinMode.text = "Pin"
-                Toast.makeText(requireContext(), "핀이 추가되었습니다.", Toast.LENGTH_SHORT).show()
-                showEventDetailSheetForNew(newLabel)
+                showEventDetailSheet(latLng) // eventId 없이 호출 (새 핀)
+            }
+
+            onPinClickListener = { clickedLabel, eventId ->
+                showEventDetailSheet(clickedLabel.position, eventId) // eventId와 함께 호출 (기존 핀)
             }
         }
     }
 
-    private fun showEventDetailSheetForNew(label: Label) {
+    private fun showEventDetailSheet(latLng: LatLng, eventId: String? = null) {
         if (childFragmentManager.findFragmentByTag(EventDetailBottomSheet.TAG) != null) return
-        val bottomSheet = EventDetailBottomSheet.newInstanceForNewPin(label.labelId, label.position)
 
-        // ❗ [수정] 리스너를 설정할 때, 익명 객체로 즉석에서 구현하고 할당합니다.
-        bottomSheet.setOnDismissListener(object : EventDetailBottomSheet.OnDismissListener {
-            override fun onDismissWithoutSaving(tempLabelId: String) {
-                // 콜백 로직이 사용되는 곳에 바로 있어 이해하기 쉬움
-                mapPinManager?.removePinById(tempLabelId)
-            }
-        })
-
+        val bottomSheet = EventDetailBottomSheet.newInstance(latLng, eventId)
         bottomSheet.show(childFragmentManager, EventDetailBottomSheet.TAG)
-    }
-
-    private fun showEventDetailSheetForExisting(eventId: String, latLng: LatLng) {
-        if (childFragmentManager.findFragmentByTag(EventDetailBottomSheet.TAG) != null) return
-        val bottomSheet = EventDetailBottomSheet.newInstanceForExistingPin(eventId, latLng)
-        bottomSheet.show(childFragmentManager, EventDetailBottomSheet.TAG)
-    }
-
-    fun linkNewPin(labelId: String, eventId: String) {
-        mapPinManager?.linkEventToLabel(labelId, eventId)
     }
 
     override fun onPause() {
