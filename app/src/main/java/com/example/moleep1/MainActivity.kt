@@ -1,6 +1,7 @@
 package com.example.moleep1
 
 import android.os.Bundle
+import android.util.Log
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.navigation.findNavController
@@ -8,6 +9,7 @@ import androidx.navigation.ui.AppBarConfiguration
 import androidx.navigation.ui.setupActionBarWithNavController
 import androidx.navigation.ui.setupWithNavController
 import com.example.moleep1.databinding.ActivityMainBinding
+import com.kakao.sdk.common.util.Utility
 
 class MainActivity : AppCompatActivity() {
 
@@ -18,7 +20,8 @@ class MainActivity : AppCompatActivity() {
 
 
 
-
+        val keyHash = Utility.getKeyHash(this)
+        Log.d("KakaoKeyHash", "내 디버그 키 해시: $keyHash")
 
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)

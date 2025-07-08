@@ -86,4 +86,5 @@ dependencies {
     implementation(libs.retrofit.v290)
     implementation(libs.converter.gson)
     implementation(libs.logging.interceptor.v4110)
+    implementation(libs.v2.common)
 }

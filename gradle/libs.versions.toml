@@ -24,6 +24,7 @@ retrofitVersion = "2.9.0"
 roomCommonJvm = "2.7.2"
 roomRuntimeJvm = "2.7.2"
 roomRuntime = "2.7.2"
+v2Common = "2.20.1"
 
 [libraries]
 androidx-lifecycle-runtime-ktx = { module = "androidx.lifecycle:lifecycle-runtime-ktx", version.ref = "lifecycleLivedataKtx" }
@@ -55,6 +56,7 @@ androidx-room-common-jvm = { group = "androidx.room", name = "room-common-jvm", 
 androidx-room-runtime-jvm = { group = "androidx.room", name = "room-runtime-jvm", version.ref = "roomRuntimeJvm" }
 retrofit = { module = "com.squareup.retrofit2:retrofit", version.ref = "retrofit" }
 retrofit-v290 = { module = "com.squareup.retrofit2:retrofit", version.ref = "retrofitVersion" }
+v2-common = { module = "com.kakao.sdk:v2-common", version.ref = "v2Common" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
