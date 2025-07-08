@@ -75,4 +75,9 @@ class HomeViewModel(private val prefsManager: PrefsManager) : ViewModel() {
     fun saveAll() {
         _itemList.value?.let { prefsManager.saveItemList(it) }
     }
+
+    fun clearAllProfiles() {
+        _itemList.value = mutableListOf() // 리스트를 완전히 비움
+        prefsManager.saveItemList(emptyList()) // SharedPreferences도 초기화
+    }
 }

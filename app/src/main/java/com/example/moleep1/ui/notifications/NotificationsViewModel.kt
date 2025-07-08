@@ -35,6 +35,10 @@ class NotificationsViewModel : ViewModel() {
         placedImages.value = filtered
     }
 
+    fun clearAllPlacedImages(){
+        placedImages.value= mutableListOf()
+    }
+
     val offsetX = MutableLiveData(0f)
     val offsetY = MutableLiveData(0f)
     val scaleFactor = MutableLiveData(1f)

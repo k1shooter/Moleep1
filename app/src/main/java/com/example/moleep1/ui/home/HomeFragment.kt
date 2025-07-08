@@ -21,6 +21,7 @@ import com.example.moleep1.R
 import com.example.moleep1.databinding.FragmentHomeBinding
 import com.example.moleep1.list_item
 import com.example.moleep1.ui.PrefsManager
+import com.example.moleep1.ui.notifications.NotificationsViewModel
 
 class HomeFragment : Fragment() {
 
@@ -40,9 +41,6 @@ class HomeFragment : Fragment() {
         _binding = FragmentHomeBinding.inflate(inflater, container, false)
         val root: View = binding.root
 
-//        val prefsManager = PrefsManager(requireContext())
-//        val factory = HomeViewModelFactory(prefsManager)
-//        val homeViewModel = ViewModelProvider(this, factory).get(HomeViewModel::class.java)
 
         val factory = HomeViewModelFactory(PrefsManager(requireContext()))
         val homeViewModel = ViewModelProvider(requireActivity(), factory).get(HomeViewModel::class.java)
@@ -120,6 +118,13 @@ class HomeFragment : Fragment() {
             val uriString = "android.resource://${requireContext().packageName}/$randomResId"
             homeViewModel.addItem(list_item(randomName, randomDesc, uriString))
             binding.listView.smoothScrollToPosition(adapter.count - 1)
+        }
+
+        binding.clearAllButton.setOnClickListener {
+            homeViewModel.clearAllProfiles()
+            // 그림판 등 연동 데이터도 있으면 같이 초기화
+            val notiviewModel: NotificationsViewModel by activityViewModels()
+            notiviewModel.clearAllPlacedImages()
         }
 
         return root
