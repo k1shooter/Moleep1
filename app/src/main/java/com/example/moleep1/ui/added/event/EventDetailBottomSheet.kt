@@ -13,11 +13,15 @@ import android.util.Log
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.lifecycle.lifecycleScope
+import androidx.recyclerview.widget.LinearLayoutManager
 
 import com.example.moleep1.databinding.BottomSheetEventDetailBinding
 import com.example.moleep1.ui.added.AddedFragment
 import com.example.moleep1.ui.added.ImageUtils
+import com.example.moleep1.ui.added.PersonAdapter
+import com.example.moleep1.ui.home.HomeViewModel
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.timepicker.MaterialTimePicker
 import com.google.android.material.timepicker.TimeFormat
 import com.kakao.vectormap.LatLng
@@ -52,6 +56,10 @@ class EventDetailBottomSheet : BottomSheetDialogFragment() {
 
     private var selectedTime: String? = null
 
+    private val homeViewModel: HomeViewModel by activityViewModels() // HomeViewModel 가져오기
+    private lateinit var personAdapter: PersonAdapter
+    private val selectedAttendeeIds = mutableSetOf<String>()
+
     private val pickImageLauncher = registerForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
         uri?.let {
             tempSelectedUri = it
@@ -79,11 +87,27 @@ class EventDetailBottomSheet : BottomSheetDialogFragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+        setupRecyclerView()
         loadData()
         setupListeners()
     }
 
+    private fun setupRecyclerView() {
+        personAdapter = PersonAdapter { personId, isSelected ->
+            if (isSelected) {
+                selectedAttendeeIds.add(personId)
+            } else {
+                selectedAttendeeIds.remove(personId)
+            }
+        }
+        binding.rvPersonList.apply {
+            adapter = personAdapter
+            layoutManager = LinearLayoutManager(requireContext())
+        }
+    }
+
     private fun loadData() {
+        binding.btnDelete.visibility = if (eventId != null) View.VISIBLE else View.GONE
         eventId?.let { id ->
             viewModel.findEventById(id)?.let { event ->
                 binding.etEventName.setText(event.eventName)
@@ -92,6 +116,11 @@ class EventDetailBottomSheet : BottomSheetDialogFragment() {
                 var selectedTime = event.eventTime
                 binding.tvEventTime.text = selectedTime ?: "시간 설정"
 
+                selectedAttendeeIds.clear()
+                event.attendeeIds?.let { ids -> // null이 아닐 때만 이 블록이 실행됨
+                    selectedAttendeeIds.addAll(ids)
+                }
+
                 currentPhotoPath = event.photoUri
                 currentPhotoPath?.let { path ->
                     val file = File(path)
@@ -99,6 +128,11 @@ class EventDetailBottomSheet : BottomSheetDialogFragment() {
                         binding.ivEventPhoto.setImageURI(Uri.fromFile(file))
                     }
                 }
+            }
+        }
+        homeViewModel.itemList.observe(viewLifecycleOwner) { allPeople ->
+            if (allPeople != null) { // allPeople도 null일 수 있으므로 확인
+                personAdapter.submitList(allPeople, selectedAttendeeIds)
             }
         }
     }
@@ -136,14 +170,35 @@ class EventDetailBottomSheet : BottomSheetDialogFragment() {
                     binding.etEventDescription.text.toString(),
                     pinLatLng!!,
                     newPath ?: currentPhotoPath,
-                    selectedTime
+                    selectedTime,
+                    selectedAttendeeIds.toList()
                 )
 
                 dismiss()
             }
 
         }
+        binding.btnDelete.setOnClickListener {
+            // eventId가 있는 기존 이벤트만 삭제 가능
+            eventId?.let { id ->
+                showDeleteConfirmationDialog(id)
+            }
+        }
     }
+
+    private fun showDeleteConfirmationDialog(eventId: String) {
+        MaterialAlertDialogBuilder(requireContext())
+            .setTitle("사건 삭제")
+            .setMessage("이 사건에 대한 모든 정보를 정말로 삭제하시겠습니까?")
+            .setNegativeButton("취소", null)
+            .setPositiveButton("삭제") { _, _ ->
+                // '삭제'를 누르면 ViewModel에 삭제 요청
+                viewModel.deleteEvent(eventId)
+                dismiss() // BottomSheet 닫기
+            }
+            .show()
+    }
+
     private fun showTimePicker() {
         val picker = MaterialTimePicker.Builder()
             .setTimeFormat(TimeFormat.CLOCK_12H)

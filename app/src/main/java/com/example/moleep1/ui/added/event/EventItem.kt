@@ -9,6 +9,7 @@ data class EventItem(
     var description: String,
     var photoUri: String? = null,
     var eventTime: String? = null,
+    var attendeeIds: MutableList<String> = mutableListOf(),
     val latitude: Double,
     val longitude: Double
 )

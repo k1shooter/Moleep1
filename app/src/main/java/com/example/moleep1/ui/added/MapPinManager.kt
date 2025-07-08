@@ -13,6 +13,7 @@ import java.io.File
 class MapPinManager(private val context: Context, private val kakaoMap: KakaoMap) {
 
     private val labelToEventIdMap = mutableMapOf<String, String>()
+    private val eventToLabelIdMap = mutableMapOf<String, String>()
     private var isPinAddMode = false
 
     // ❗ [수정] onPinClickListener가 Label과 String(eventId) 두 파라미터를 받도록 타입을 변경합니다.
@@ -57,8 +58,8 @@ class MapPinManager(private val context: Context, private val kakaoMap: KakaoMap
 
         manager.getLayer()?.addLabel(options)?.let { newLabel ->
             labelToEventIdMap[newLabel.labelId] = event.eventId
+            eventToLabelIdMap[event.eventId] = newLabel.labelId
 
-            // ❗ [수정] 저장된 URI 문자열을 파싱하여 배지 추가
             event.photoUri?.let { pathString ->
                 val file = File(pathString)
                 if (file.exists()) {
@@ -66,6 +67,21 @@ class MapPinManager(private val context: Context, private val kakaoMap: KakaoMap
                 }
             }
         }
+    }
+
+    fun updatePinDetails(event: EventItem) {
+        // eventId를 사용해 현재 지도에 있는 labelId를 찾음
+        val labelId = eventToLabelIdMap[event.eventId] ?: return
+        val label = kakaoMap.labelManager?.layer?.getLabel(labelId) ?: return
+
+        Log.d("MapPinManager", "${event.eventName} 핀의 배지 업데이트...")
+        // 사진 URI가 있으면 배지를 업데이트, 없으면 모든 배지를 제거
+        event.photoUri?.let { pathString ->
+            val file = File(pathString)
+            if (file.exists()) {
+                addPhotoBadgeToLabel(label, Uri.fromFile(file))
+            }
+        } ?: label.removeAllBadge()
     }
 
     fun addPhotoBadgeToLabel(label: Label, imageUri: Uri) {
@@ -80,9 +96,23 @@ class MapPinManager(private val context: Context, private val kakaoMap: KakaoMap
         label.addBadge(badgeOptions)[0]?.show()
     }
 
+    fun removePinByEventId(eventId: String) {
+        val labelId = eventToLabelIdMap[eventId] ?: return
+
+        // 1. 지도에서 Label 객체 제거
+        kakaoMap.labelManager?.layer?.getLabel(labelId)?.remove()
+
+        // 2. 두 개의 맵에서 ID 정보 제거
+        eventToLabelIdMap.remove(eventId)
+        labelToEventIdMap.remove(labelId)
+
+        Log.d("MapPinManager", "핀 완전 삭제 완료: $eventId")
+    }
+
     fun clearAllPins() {
         kakaoMap.labelManager?.getLayer()?.removeAll()
         labelToEventIdMap.clear()
+        eventToLabelIdMap.clear()
     }
 
     fun moveCamera(position: LatLng, zoomLevel: Int = 15) {

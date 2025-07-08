@@ -1,40 +1,45 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:orientation="vertical"
-    android:padding="16dp"
-    android:background="@drawable/bottom_sheet_background">
+    android:background="@drawable/bottom_sheet_background"
+    android:padding="16dp">
 
     <View
+        android:id="@+id/handle_view"
         android:layout_width="40dp"
         android:layout_height="4dp"
-        android:layout_gravity="center_horizontal"
         android:background="@android:color/darker_gray"
-        android:layout_marginBottom="16dp"/>
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
 
     <LinearLayout
-        android:layout_width="match_parent"
+        android:id="@+id/info_section"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
         android:orientation="horizontal"
-        android:layout_marginBottom="16dp">
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/handle_view">
 
         <ImageView
             android:id="@+id/iv_event_photo"
             android:layout_width="100dp"
             android:layout_height="100dp"
-            android:scaleType="centerCrop"
             android:background="#E0E0E0"
+            android:scaleType="centerCrop"
             android:src="@drawable/ic_add_photo" />
 
         <LinearLayout
             android:layout_width="0dp"
             android:layout_height="wrap_content"
+            android:layout_marginStart="16dp"
             android:layout_weight="1"
-            android:orientation="vertical"
-            android:layout_marginStart="16dp">
+            android:orientation="vertical">
 
             <EditText
                 android:id="@+id/et_event_name"
@@ -55,32 +60,70 @@
                 android:id="@+id/tv_event_time"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="시간 설정"
+                android:background="?attr/selectableItemBackground"
                 android:paddingTop="8dp"
                 android:paddingBottom="8dp"
-                android:textColor="@color/design_default_color_primary"
-                android:background="?attr/selectableItemBackground" />
+                android:text="시간 설정"
+                android:textColor="@color/design_default_color_primary" />
         </LinearLayout>
     </LinearLayout>
 
     <TextView
+        android:id="@+id/title_attendees"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:layout_marginBottom="8dp"
         android:text="관련 인물"
         android:textStyle="bold"
-        android:layout_marginBottom="8dp"/>
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/info_section" />
+
+    <LinearLayout
+        android:id="@+id/button_container"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_marginTop="16dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent">
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btn_delete"
+            style="?attr/materialButtonOutlinedStyle"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="삭제"
+            tools:visibility="visible"
+            android:visibility="gone"
+            android:textAppearance="@style/TextAppearance.Material3.LabelLarge" />
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btn_save"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:layout_marginStart="8dp"
+            android:text="저장"
+            android:textAppearance="@style/TextAppearance.Material3.LabelLarge" />
+    </LinearLayout>
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/rv_person_list"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        tools:listitem="@layout/item_person_toggle"
-        tools:itemCount="3"/>
-    <Button
-        android:id="@+id/btn_save"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="16dp"
-        android:text="저장" />
+        android:layout_width="0dp"
+        android:layout_marginBottom="8dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/title_attendees"
+        app:layout_constraintBottom_toTopOf="@id/button_container"
 
-</LinearLayout>
+        tools:listitem="@layout/item_person_toggle"
+        tools:itemCount="5"
+
+        android:layout_height="220dp"
+
+        app:layout_constraintVertical_bias="0.0"
+        app:layout_constrainedHeight="true"/>
+
+</androidx.constraintlayout.widget.ConstraintLayout>
