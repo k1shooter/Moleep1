@@ -1,3 +1,5 @@
+// com.example.moleep1.ui.added.MapCapture.kt
+
 package com.example.moleep1.ui.added;
 
 import android.app.Activity;

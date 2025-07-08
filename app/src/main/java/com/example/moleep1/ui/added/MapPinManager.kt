@@ -1,26 +1,21 @@
 package com.example.moleep1.ui.added
 
 import android.content.Context
-import android.net.Uri
 import android.util.Log
 import com.example.moleep1.R
-import com.kakao.vectormap.KakaoMap
-import com.kakao.vectormap.LatLng
+import com.example.moleep1.ui.added.event.*
+import com.kakao.vectormap.*
 import com.kakao.vectormap.camera.CameraUpdateFactory
-import com.kakao.vectormap.label.BadgeOptions
-import com.kakao.vectormap.label.Label
-import com.kakao.vectormap.label.LabelOptions
-import com.kakao.vectormap.label.LabelStyle
-import com.kakao.vectormap.label.LabelStyles
+import com.kakao.vectormap.label.*
 
 class MapPinManager(private val context: Context, private val kakaoMap: KakaoMap) {
 
-    // ❗ [수정] Label의 ID와 객체를 함께 저장하기 위해 Map으로 변경
-    private val pins = mutableMapOf<String, Label>()
+    private val labelToEventIdMap = mutableMapOf<String, String>()
     private var isPinAddMode = false
 
-    var onPinClickListener: ((Label) -> Unit)? = null
-    var onPinAddedListener: ((LatLng) -> Unit)? = null
+    // ❗ [수정] onPinClickListener가 Label과 String(eventId) 두 파라미터를 받도록 타입을 변경합니다.
+    var onPinClickListener: ((Label, String) -> Unit)? = null
+    var onPinAddedListener: ((Label) -> Unit)? = null
 
     private val pinStyle = kakaoMap.labelManager!!.addLabelStyles(
         LabelStyles.from(LabelStyle.from(R.drawable.pin_icon_128))
@@ -33,17 +28,19 @@ class MapPinManager(private val context: Context, private val kakaoMap: KakaoMap
     private fun setupMapListeners() {
         kakaoMap.setOnMapClickListener { _, position, _, _ ->
             if (isPinAddMode) {
-                addPin(position)
+                addPin(position)?.let { newLabel ->
+                    onPinAddedListener?.invoke(newLabel)
+                }
                 isPinAddMode = false
-                onPinAddedListener?.invoke(position)
             }
         }
 
         kakaoMap.setOnPoiClickListener { _, _, _, poiId ->
-            // ❗ [수정] 저장해둔 pins Map에서 Label 객체를 직접 찾음
-            val clickedLabel = pins[poiId]
-            if (clickedLabel != null) {
-                onPinClickListener?.invoke(clickedLabel)
+            labelToEventIdMap[poiId]?.let { eventId ->
+                kakaoMap.labelManager?.layer?.getLabel(poiId)?.let { label ->
+                    // 변경된 타입에 맞게 Label 객체와 eventId를 함께 전달합니다.
+                    onPinClickListener?.invoke(label, eventId)
+                }
             }
         }
     }
@@ -52,32 +49,39 @@ class MapPinManager(private val context: Context, private val kakaoMap: KakaoMap
         isPinAddMode = isEnabled
     }
 
-    private fun addPin(position: LatLng) {
-        val manager = kakaoMap.labelManager ?: return
-        val layer = manager.getLayer()
+    private fun addPin(position: LatLng): Label? {
+        val manager = kakaoMap.labelManager ?: return null
         val options = LabelOptions.from(position)
-            .setStyles(pinStyle)
-            .setRank(1)
-
-        layer?.addLabel(options)?.let { label ->
-            // ❗ [수정] ID와 Label 객체를 pins Map에 저장
-            pins[label.labelId] = label
-            Log.d("MapPinManager", "✅ 아이콘 핀 추가 성공! ID: ${label.labelId}")
-        } ?: Log.e("MapPinManager", "❌ 아이콘 핀 추가 실패!")
+            .setStyles(pinStyle).setRank(1)
+        return manager.getLayer()?.addLabel(options)
     }
 
-    fun addPhotoBadgeToLabel(label: Label, imageUri: Uri) {
-        label.removeAllBadge()
+    fun addPinFromData(event: EventItem) {
+        val manager = kakaoMap.labelManager ?: return
+        val position = LatLng.from(event.latitude, event.longitude)
+        val options = LabelOptions.from(position)
+            .setStyles(pinStyle).setRank(1)
 
-        val sourceBitmap = ImageUtils.uriToBitmap(context, imageUri) ?: return
-        val croppedBitmap = ImageUtils.cropToCircle(sourceBitmap)
-        val finalBitmap = ImageUtils.resizeBitmap(croppedBitmap, 60, 60)
+        manager.getLayer()?.addLabel(options)?.let { newLabel ->
+            labelToEventIdMap[newLabel.labelId] = event.eventId
+            Log.d("MapPinManager", "지도에 핀 로드: ${newLabel.labelId} -> ${event.eventId}")
+        }
+    }
 
-        val badgeOptions = BadgeOptions.from(finalBitmap)
-            .setOffset(0.5f, 0.4f)
+    fun linkEventToLabel(labelId: String, eventId: String) {
+        labelToEventIdMap[labelId] = eventId
+        Log.d("MapPinManager", "새 핀 연결: $labelId -> $eventId")
+    }
 
-        val badgeList = label.addBadge(badgeOptions)
-        badgeList[0].show()
+    fun removePinById(labelId: String) {
+        // labelId를 사용해 Label 객체를 찾아 제거합니다.
+        kakaoMap.labelManager?.layer?.getLabel(labelId)?.remove()
+        Log.d("MapPinManager", "임시 핀 제거 완료: $labelId")
+    }
+
+    fun clearAllPins() {
+        kakaoMap.labelManager?.getLayer()?.removeAll()
+        labelToEventIdMap.clear()
     }
 
     fun moveCamera(position: LatLng, zoomLevel: Int = 15) {

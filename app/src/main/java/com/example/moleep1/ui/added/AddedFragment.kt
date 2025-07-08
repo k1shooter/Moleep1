@@ -2,20 +2,17 @@
 
 package com.example.moleep1.ui.added
 
-import android.net.Uri
 import android.os.Bundle
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.activityViewModels
 import com.example.moleep1.databinding.FragmentAddedBinding
-import com.kakao.vectormap.KakaoMap
-import com.kakao.vectormap.KakaoMapReadyCallback
-import com.kakao.vectormap.MapLifeCycleCallback
-import com.kakao.vectormap.MapView
+import com.example.moleep1.ui.added.event.*
+import com.kakao.vectormap.*
 import com.kakao.vectormap.label.Label // Label import 추가
 
 class AddedFragment : Fragment() {
@@ -26,19 +23,8 @@ class AddedFragment : Fragment() {
     private lateinit var mapView: MapView
     private var mapPinManager: MapPinManager? = null
     private lateinit var locationHandler: LocationHandler
-
-    // ❗ [추가] 사진을 추가할 핀(라벨)을 임시 저장하는 변수
-    private var tappedLabelForPhoto: Label? = null
-
-    // ❗ [수정] 이미지 선택 후, MapPinManager에 배지 추가를 요청하는 로직 추가
-    private val pickImageLauncher = registerForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
-        if (uri != null && tappedLabelForPhoto != null) {
-            mapPinManager?.addPhotoBadgeToLabel(tappedLabelForPhoto!!, uri)
-            Toast.makeText(requireContext(), "사진이 추가되었습니다.", Toast.LENGTH_SHORT).show()
-        } else {
-            Toast.makeText(requireContext(), "사진 추가에 실패했습니다.", Toast.LENGTH_SHORT).show()
-        }
-        tappedLabelForPhoto = null // 작업 후 초기화
+    private val viewModel: EventViewModel by activityViewModels {
+        EventViewModelFactory(EventManager(requireContext()))
     }
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
@@ -105,8 +91,8 @@ class AddedFragment : Fragment() {
     private val mapReadyCallback = object : KakaoMapReadyCallback() {
         override fun onMapReady(kakaoMap: KakaoMap) {
             Log.d("KakaoMap", "Map is ready")
-            // ❗ [수정] 초기화 로직을 별도 함수로 분리하여 가독성 향상
             initializeMapManager(kakaoMap)
+            setupViewModelObservers() // ❗ [추가] ViewModel 관찰자 설정
 
             if (mapPinManager?.loadLastLocation() == false) {
                 binding.fabCurrentLocation.performClick()
@@ -114,23 +100,53 @@ class AddedFragment : Fragment() {
         }
     }
 
-    /**
-     * [추가] MapPinManager를 생성하고 콜백 리스너를 설정하는 함수
-     */
-    private fun initializeMapManager(kakaoMap: KakaoMap) {
-        mapPinManager = MapPinManager(requireContext(), kakaoMap).apply {
-            // 1. 핀이 클릭되었을 때 실행될 동작 정의
-            onPinClickListener = { clickedLabel ->
-                // ❗ 클릭된 라벨을 저장하고, 이미지 선택기 실행
-                tappedLabelForPhoto = clickedLabel
-                pickImageLauncher.launch("image/*")
-            }
-            // 2. 핀이 지도에 새로 추가되었을 때 실행될 동작 정의
-            onPinAddedListener = {
-                binding.btnAddPinMode.text = "Pin"
-                Toast.makeText(requireContext(), "핀이 추가되었습니다.", Toast.LENGTH_SHORT).show()
+    private fun setupViewModelObservers() {
+        viewModel.eventList.observe(viewLifecycleOwner) { events ->
+            mapPinManager?.clearAllPins() // 기존 핀 모두 제거
+            events.forEach { event ->
+                mapPinManager?.addPinFromData(event) // 저장된 데이터로 핀 추가
             }
         }
+    }
+
+    private fun initializeMapManager(kakaoMap: KakaoMap) {
+        mapPinManager = MapPinManager(requireContext(), kakaoMap).apply {
+            // ❗ [수정] 클릭 리스너: label과 함께 영구 eventId를 받음
+            onPinClickListener = { clickedLabel, eventId ->
+                showEventDetailSheetForExisting(eventId, clickedLabel.position)
+            }
+            // ❗ [수정] 추가 리스너: 새로 생성된 Label 객체를 받음
+            onPinAddedListener = { newLabel ->
+                binding.btnAddPinMode.text = "Pin"
+                Toast.makeText(requireContext(), "핀이 추가되었습니다.", Toast.LENGTH_SHORT).show()
+                showEventDetailSheetForNew(newLabel)
+            }
+        }
+    }
+
+    private fun showEventDetailSheetForNew(label: Label) {
+        if (childFragmentManager.findFragmentByTag(EventDetailBottomSheet.TAG) != null) return
+        val bottomSheet = EventDetailBottomSheet.newInstanceForNewPin(label.labelId, label.position)
+
+        // ❗ [수정] 리스너를 설정할 때, 익명 객체로 즉석에서 구현하고 할당합니다.
+        bottomSheet.setOnDismissListener(object : EventDetailBottomSheet.OnDismissListener {
+            override fun onDismissWithoutSaving(tempLabelId: String) {
+                // 콜백 로직이 사용되는 곳에 바로 있어 이해하기 쉬움
+                mapPinManager?.removePinById(tempLabelId)
+            }
+        })
+
+        bottomSheet.show(childFragmentManager, EventDetailBottomSheet.TAG)
+    }
+
+    private fun showEventDetailSheetForExisting(eventId: String, latLng: LatLng) {
+        if (childFragmentManager.findFragmentByTag(EventDetailBottomSheet.TAG) != null) return
+        val bottomSheet = EventDetailBottomSheet.newInstanceForExistingPin(eventId, latLng)
+        bottomSheet.show(childFragmentManager, EventDetailBottomSheet.TAG)
+    }
+
+    fun linkNewPin(labelId: String, eventId: String) {
+        mapPinManager?.linkEventToLabel(labelId, eventId)
     }
 
     override fun onPause() {

@@ -1,4 +1,4 @@
-// com/example/moleep1/ui/added/ImageUtils.kt
+// com.example.moleep1.ui.added.ImageUtils.kt
 
 package com.example.moleep1.ui.added
 
