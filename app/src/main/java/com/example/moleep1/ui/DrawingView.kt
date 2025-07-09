@@ -21,7 +21,10 @@ import android.graphics.ImageDecoder
 import android.net.Uri
 import android.os.Build
 import android.os.Environment
+import android.os.Handler
+import android.os.Looper
 import android.provider.MediaStore
+import android.widget.Toast
 import com.example.moleep1.ui.notifications.PlacedText
 
 import com.example.moleep1.ui.notifications.PlacedGallery
@@ -70,7 +73,6 @@ class DrawingView(context: Context, attrs: AttributeSet?) : View(context,attrs) 
     fun saveBitmapToGallery(context: Context, bitmap: Bitmap, title: String): Boolean {
         return try {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                // Android 10 이상: MediaStore 사용
                 val contentValues = ContentValues().apply {
                     put(MediaStore.Images.Media.DISPLAY_NAME, "$title.png")
                     put(MediaStore.Images.Media.MIME_TYPE, "image/png")
@@ -78,27 +80,30 @@ class DrawingView(context: Context, attrs: AttributeSet?) : View(context,attrs) 
                 }
                 val resolver = context.contentResolver
                 val uri = resolver.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, contentValues)
-                uri?.let {
-                    resolver.openOutputStream(it)?.use { out ->
-                        bitmap.compress(Bitmap.CompressFormat.PNG, 100, out)
-                    }
-                } ?: throw Exception("MediaStore insert 실패")
+                    ?: throw Exception("MediaStore insert 실패 (uri==null)")
+                resolver.openOutputStream(uri)?.use { out ->
+                    if (!bitmap.compress(Bitmap.CompressFormat.PNG, 100, out))
+                        throw Exception("bitmap.compress 실패")
+                } ?: throw Exception("openOutputStream 실패")
             } else {
-                // Android 9 이하: 직접 파일로 저장
                 val picturesDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES)
                 val appDir = File(picturesDir, "MyApp")
                 if (!appDir.exists()) appDir.mkdirs()
                 val file = File(appDir, "$title.png")
                 FileOutputStream(file).use { out ->
-                    bitmap.compress(Bitmap.CompressFormat.PNG, 100, out)
+                    if (!bitmap.compress(Bitmap.CompressFormat.PNG, 100, out))
+                        throw Exception("bitmap.compress 실패")
                 }
-                // 미디어 스캔(갤러리 반영)
                 context.sendBroadcast(Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE, Uri.fromFile(file)))
             }
-            true // 성공
+            true
         } catch (e: Exception) {
             e.printStackTrace()
-            false // 실패
+            // 예외 메시지를 토스트로 직접 출력
+            Handler(Looper.getMainLooper()).post {
+                Toast.makeText(context, "저장 에러: ${e.message}", Toast.LENGTH_LONG).show()
+            }
+            false
         }
     }
 

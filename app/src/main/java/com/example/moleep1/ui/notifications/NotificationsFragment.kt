@@ -33,7 +33,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.ContextCompat
 import com.example.moleep1.ui.PrefsManager
 import com.example.moleep1.ui.home.HomeViewModelFactory
-
+import android.os.Build
 
 class NotificationsFragment : Fragment() {
 
@@ -81,6 +81,18 @@ class NotificationsFragment : Fragment() {
                     1001
                 )
                 return@setOnClickListener // 권한 허용 후 다시 시도하도록 종료
+            }
+
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                if (ContextCompat.checkSelfPermission(requireContext(), Manifest.permission.READ_MEDIA_IMAGES)
+                    != PackageManager.PERMISSION_GRANTED) {
+                    ActivityCompat.requestPermissions(
+                        requireActivity(),
+                        arrayOf(Manifest.permission.READ_MEDIA_IMAGES),
+                        1002
+                    )
+                    return@setOnClickListener
+                }
             }
 
             // 3. 권한이 있을 때만 저장 코드 실행
