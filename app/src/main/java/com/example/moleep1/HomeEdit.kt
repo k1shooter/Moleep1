@@ -2,15 +2,18 @@ package com.example.moleep1
 
 import android.app.Activity
 import android.app.Dialog
+import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.widget.EditText
 import android.widget.ImageView
+import android.widget.Toast
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
+import androidx.core.content.FileProvider
 import androidx.core.net.toUri
 import androidx.fragment.app.DialogFragment
 import androidx.fragment.app.activityViewModels
@@ -19,6 +22,7 @@ import com.example.moleep1.ui.PrefsManager
 import com.example.moleep1.ui.home.HomeViewModel
 import com.example.moleep1.ui.home.HomeViewModelFactory
 import com.example.moleep1.ui.notifications.NotificationsViewModel
+import java.io.File
 
 class HomeEdit(
     private val item: list_item,
@@ -30,6 +34,21 @@ class HomeEdit(
 
     private var selectedImageUri: Uri? = null // 새로 선택된 이미지를 저장할 변수
     private lateinit var imagePickerLauncher: ActivityResultLauncher<Intent>
+
+    fun copyUriToInternalStorage(context: Context, uri: Uri, fileName: String): Uri? {
+        return try {
+            val inputStream = context.contentResolver.openInputStream(uri) ?: return null
+            val file = File(context.filesDir, fileName)
+            file.outputStream().use { output ->
+                inputStream.copyTo(output)
+            }
+            // FileProvider 사용 권장 (Android 7.0+)
+            FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", file)
+        } catch (e: Exception) {
+            e.printStackTrace()
+            null
+        }
+    }
 
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
         val factory = HomeViewModelFactory(PrefsManager(requireContext()))
@@ -49,9 +68,15 @@ class HomeEdit(
         // 최신 방식의 ActivityResultLauncher 초기화
         imagePickerLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
             if (result.resultCode == Activity.RESULT_OK && result.data != null) {
-                // 이미지를 선택하면 selectedImageUri에 저장하고 ImageView에 바로 보여줌
-                selectedImageUri = result.data!!.data
-                imageView.setImageURI(selectedImageUri)
+                val originalUri = result.data!!.data!!
+                val fileName = "profile_${System.currentTimeMillis()}.jpg"
+                val copiedUri = copyUriToInternalStorage(requireContext(), originalUri, fileName)
+                if (copiedUri != null) {
+                    selectedImageUri = copiedUri
+                    imageView.setImageURI(selectedImageUri)
+                } else {
+                    Toast.makeText(requireContext(), "이미지 복사 실패", Toast.LENGTH_SHORT).show()
+                }
             }
         }
 
@@ -64,20 +89,19 @@ class HomeEdit(
         }
 
 
+
         return AlertDialog.Builder(requireContext(), R.style.CustomDialog)
             .setTitle("Profile Edit")
             .setView(view)
             .setPositiveButton("Save") { _, _ ->
-                // ★★★ 이 부분 로직 수정 ★★★
-                // 새로 선택된 이미지가 있으면 그 URI를, 없으면 기존 URI를 사용
                 val finalImageUriString = selectedImageUri?.toString() ?: item.imageUri
 
-                item.imageUri=finalImageUriString
-                item.desc=descEdit.text.toString()
-                item.name=titleEdit.text.toString()
+                item.imageUri = finalImageUriString
+                item.desc = descEdit.text.toString()
+                item.name = titleEdit.text.toString()
                 viewModel.updateItem(id, item)
                 val notiviewModel: NotificationsViewModel by activityViewModels()
-                notiviewModel.updatePlacedImageBitmapById(id,finalImageUriString, context = requireContext())
+                notiviewModel.updatePlacedImageBitmapById(id, finalImageUriString, context = requireContext())
             }
             .setNeutralButton("Delete") { _, _ -> // ★★★ 삭제 버튼 추가 ★★★
                 viewModel.removeItem(id)
