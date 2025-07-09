@@ -59,6 +59,18 @@
             app:iconPadding="0dp"
             app:iconSize="32dp"
             app:iconTint="@android:color/white"/>
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btn_calculate_time"
+            style="@style/Widget.Material3.Button.IconButton"
+            android:layout_width="56dp"
+            android:layout_height="56dp"
+            android:layout_marginTop="8dp"
+            app:backgroundTint="#B3333333"
+            app:icon="@android:drawable/ic_menu_recent_history"
+            app:iconGravity="textStart"
+            app:iconPadding="0dp"
+            app:iconSize="32dp"
+            app:iconTint="@android:color/white"/>
     </LinearLayout>
 
     <androidx.cardview.widget.CardView

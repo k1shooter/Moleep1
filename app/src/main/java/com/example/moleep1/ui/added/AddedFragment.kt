@@ -94,6 +94,15 @@ class AddedFragment : Fragment() {
         }
         // 동선 버튼
         binding.btnPath.setOnClickListener { togglePathMode() }
+        // 시간 계산 버튼
+        binding.btnCalculateTime.setOnClickListener {
+            val activeIds = mapPinManager?.getActivePathPersonIds()
+            if (activeIds.isNullOrEmpty()) {
+                Toast.makeText(requireContext(), "먼저 동선을 표시해주세요.", Toast.LENGTH_SHORT).show()
+            } else {
+                viewModel.calculateDurationsForActivePaths(activeIds)
+            }
+        }
     }
 
     // ViewModel의 LiveData를 관찰하여 UI를 업데이트하는 로직
@@ -117,6 +126,11 @@ class AddedFragment : Fragment() {
             event.getContentIfNotHandled()?.let { (personId, path) ->
                 mapPinManager?.drawPathForPerson(personId, path)
                 mapPinManager?.animatePathForPerson(personId)
+            }
+        }
+        viewModel.durationLabels.observe(viewLifecycleOwner) { event ->
+            event.getContentIfNotHandled()?.let { labelsInfo ->
+                mapPinManager?.drawDurationLabels(labelsInfo)
             }
         }
     }
