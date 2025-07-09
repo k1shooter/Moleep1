@@ -25,6 +25,7 @@ import android.os.Handler
 import android.os.Looper
 import android.provider.MediaStore
 import android.widget.Toast
+import com.bumptech.glide.request.RequestOptions
 import com.example.moleep1.ui.notifications.PlacedText
 
 import com.example.moleep1.ui.notifications.PlacedGallery
@@ -118,7 +119,9 @@ class DrawingView(context: Context, attrs: AttributeSet?) : View(context,attrs) 
         return try {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
                 val source = ImageDecoder.createSource(context.contentResolver, uri)
-                ImageDecoder.decodeBitmap(source)
+                ImageDecoder.decodeBitmap(source){ decoder, _, _ ->
+                    decoder.setAllocator(ImageDecoder.ALLOCATOR_SOFTWARE)
+                }
             } else {
                 MediaStore.Images.Media.getBitmap(context.contentResolver, uri)
             }
@@ -177,6 +180,7 @@ class DrawingView(context: Context, attrs: AttributeSet?) : View(context,attrs) 
         Glide.with(this)
             .asBitmap()
             .load(imageUri)
+            .apply(RequestOptions().disallowHardwareConfig())
             .into(object : CustomTarget<Bitmap>() {
                 override fun onResourceReady(resource: Bitmap, transition: Transition<in Bitmap>?) {
                     if (!isAttachedToWindow) return
@@ -198,6 +202,7 @@ class DrawingView(context: Context, attrs: AttributeSet?) : View(context,attrs) 
         Glide.with(this)
             .asBitmap()
             .load(imageUri)
+            .apply(RequestOptions().disallowHardwareConfig())
             .into(object : CustomTarget<Bitmap>() {
                 override fun onResourceReady(resource: Bitmap, transition: Transition<in Bitmap>?) {
                     if (!isAttachedToWindow) return

@@ -81,7 +81,9 @@ class NotificationsViewModel : ViewModel() {
         return try {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
                 val source = ImageDecoder.createSource(context.contentResolver, uri)
-                ImageDecoder.decodeBitmap(source)
+                ImageDecoder.decodeBitmap(source){ decoder, _, _ ->
+                    decoder.setAllocator(ImageDecoder.ALLOCATOR_SOFTWARE)
+                }
             } else {
                 MediaStore.Images.Media.getBitmap(context.contentResolver, uri)
             }
