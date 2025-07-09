@@ -72,16 +72,7 @@ class NotificationsFragment : Fragment() {
 
         btnSave.setOnClickListener {
             // 1. 권한 체크
-            if (ContextCompat.checkSelfPermission(requireContext(), Manifest.permission.WRITE_EXTERNAL_STORAGE)
-                != PackageManager.PERMISSION_GRANTED) {
-                // 2. 권한이 없으면 요청
-                ActivityCompat.requestPermissions(
-                    requireActivity(),
-                    arrayOf(Manifest.permission.WRITE_EXTERNAL_STORAGE),
-                    1001
-                )
-                return@setOnClickListener // 권한 허용 후 다시 시도하도록 종료
-            }
+
 
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
                 if (ContextCompat.checkSelfPermission(requireContext(), Manifest.permission.READ_MEDIA_IMAGES)
@@ -92,6 +83,18 @@ class NotificationsFragment : Fragment() {
                         1002
                     )
                     return@setOnClickListener
+                }
+            }
+            else{
+                if (ContextCompat.checkSelfPermission(requireContext(), Manifest.permission.WRITE_EXTERNAL_STORAGE)
+                    != PackageManager.PERMISSION_GRANTED) {
+                    // 2. 권한이 없으면 요청
+                    ActivityCompat.requestPermissions(
+                        requireActivity(),
+                        arrayOf(Manifest.permission.WRITE_EXTERNAL_STORAGE),
+                        1001
+                    )
+                    return@setOnClickListener // 권한 허용 후 다시 시도하도록 종료
                 }
             }
 
