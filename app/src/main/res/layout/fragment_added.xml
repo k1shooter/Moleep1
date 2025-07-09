@@ -23,18 +23,6 @@
         app:layout_constraintTop_toTopOf="parent">
 
         <com.google.android.material.button.MaterialButton
-            android:id="@+id/btn_path"
-            style="@style/Widget.Material3.Button.IconButton"
-            android:layout_width="56dp"
-            android:layout_height="56dp"
-            app:backgroundTint="#B3333333"
-            app:icon="@drawable/route"
-            app:iconGravity="textStart"
-            app:iconPadding="0dp"
-            app:iconSize="32dp"
-            app:iconTint="@android:color/white"/>
-
-        <com.google.android.material.button.MaterialButton
             android:id="@+id/btn_capture"
             style="@style/Widget.Material3.Button.IconButton"
             android:layout_width="56dp"
@@ -59,6 +47,20 @@
             app:iconPadding="0dp"
             app:iconSize="32dp"
             app:iconTint="@android:color/white"/>
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btn_path"
+            style="@style/Widget.Material3.Button.IconButton"
+            android:layout_width="56dp"
+            android:layout_height="56dp"
+            android:layout_marginTop="8dp"
+            app:backgroundTint="#B3333333"
+            app:icon="@drawable/route"
+            app:iconGravity="textStart"
+            app:iconPadding="0dp"
+            app:iconSize="32dp"
+            app:iconTint="@android:color/white"/>
+
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btn_calculate_time"
             style="@style/Widget.Material3.Button.IconButton"
@@ -70,6 +72,7 @@
             app:iconGravity="textStart"
             app:iconPadding="0dp"
             app:iconSize="32dp"
+            android:visibility="gone"
             app:iconTint="@android:color/white"/>
     </LinearLayout>
 

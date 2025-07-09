@@ -200,11 +200,13 @@ class AddedFragment : Fragment() {
             binding.btnPath.setIconResource(android.R.drawable.ic_menu_close_clear_cancel)
             pathPersonAdapter.submitList(homeViewModel.itemList.value ?: emptyList(), selectedPeopleForPath)
             binding.cardViewPersonList.visibility = View.VISIBLE
+            binding.btnCalculateTime.visibility = View.VISIBLE
         } else {
             binding.btnPath.setIconResource(R.drawable.route)
             binding.cardViewPersonList.visibility = View.GONE
             mapPinManager?.clearAllPaths() // 모든 동선 지우기
             selectedPeopleForPath.clear() // 선택 상태 초기화
+            binding.btnCalculateTime.visibility = View.GONE
         }
     }
 
