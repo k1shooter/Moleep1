@@ -68,6 +68,13 @@ class NotificationsViewModel : ViewModel() {
         strokes.value=updated
     }
 
+    fun clearCanvas() {
+        placedImages.value=mutableListOf()
+        placedTexts.value=mutableListOf()
+        placedGalleries.value=mutableListOf()
+        strokes.value = mutableListOf()
+    }
+
 
     fun uriToBitmap(context: Context, uriString: String): Bitmap? {
         val uri = Uri.parse(uriString)

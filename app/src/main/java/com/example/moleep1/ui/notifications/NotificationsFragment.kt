@@ -101,6 +101,7 @@ class NotificationsFragment : Fragment() {
 
         btnClear.setOnClickListener {
             drawingView.clearCanvas()
+            viewModel.clearCanvas()
         }
 
         imagePickerLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->

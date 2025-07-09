@@ -58,6 +58,7 @@ class DrawingView(context: Context, attrs: AttributeSet?) : View(context,attrs) 
     fun clearCanvas() {
         placedImages.clear()
         placedTexts.clear()
+        placedGalleries.clear()
         strokes = emptyList()
         pendingImage = null // 선택된 이미지도 해제
         invalidate()
@@ -265,10 +266,12 @@ class DrawingView(context: Context, attrs: AttributeSet?) : View(context,attrs) 
         }
 
         for ((i, img) in placedImages.withIndex()) {
-            val w = img.width.coerceAtLeast(10)
-            val h = img.height.coerceAtLeast(10)
-            val scaledBitmap = Bitmap.createScaledBitmap(img.bitmap, w, h, true)
-            canvas.drawBitmap(scaledBitmap, img.x, img.y, null)
+            if (img.bitmap != null && !img.bitmap.isRecycled) {
+                val w = img.width.coerceAtLeast(10)
+                val h = img.height.coerceAtLeast(10)
+                val scaledBitmap = Bitmap.createScaledBitmap(img.bitmap, w, h, true)
+                canvas.drawBitmap(scaledBitmap, img.x, img.y, null)
+            }
             // 선택된 이미지는 테두리 표시
             if (i == selectedImageIndex) {
                 val paint = Paint().apply {
