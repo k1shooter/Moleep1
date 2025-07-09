@@ -121,7 +121,6 @@ class MapPinManager(private val context: Context, private val kakaoMap: KakaoMap
         if (path.size < 2) return
         removePathForPerson(personId)
 
-        // ❗ [추가] personId를 기반으로 일관된 랜덤 색상을 선택
         val colorIndex = abs(personId.hashCode()) % pathColors.size
         val randomColor = pathColors[colorIndex]
 
@@ -144,12 +143,9 @@ class MapPinManager(private val context: Context, private val kakaoMap: KakaoMap
     }
 
     fun animatePathForPerson(personId: String) {
-        // activeRouteLines 맵에서 personId에 해당하는 RouteLine을 찾음
         activeRouteLines[personId]?.let { line ->
-            // ❗ [핵심] 애니메이션 시작 전, 라인을 보이지 않는 상태(-1.0)로 설정
             line.setProgress(-1.0f)
 
-            // --- 아래는 사용자님이 작성하신 RouteLineAnimator 코드입니다 ---
             val animation = ProgressAnimation.from(personId, 1500)
             animation.setInterpolation(Interpolation.Linear)
             animation.progressType = ProgressType.ToShow

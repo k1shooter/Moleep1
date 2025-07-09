@@ -48,7 +48,6 @@ class AddedFragment : Fragment() {
     }
 
     private fun setupPathUI() {
-        // ❗ [수정] PathPersonAdapter의 타입 오류를 해결합니다.
         pathPersonAdapter = PathPersonAdapter { personId, isSelected ->
             if (isSelected) {
                 selectedPeopleForPath.add(personId)
@@ -56,7 +55,6 @@ class AddedFragment : Fragment() {
                 if (events.size < 2) {
                     Toast.makeText(requireContext(), "경로를 만들기에 사건 수가 부족합니다.", Toast.LENGTH_SHORT).show()
                 } else {
-                    // ❗ [수정] ViewModel 호출 시 personId를 함께 전달합니다.
                     viewModel.findRoutePathForEvents(events, personId)
                 }
             } else {

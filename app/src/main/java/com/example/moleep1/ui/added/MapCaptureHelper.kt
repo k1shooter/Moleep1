@@ -57,11 +57,8 @@ class MapCaptureHelper {
 
         // com.kakao.maps.open.android.MapCapture.capture 호출
         MapCapture.capture(activity, surfaceView, object : MapCapture.OnCaptureListener {
-            override fun onCaptured(isSucceed: Boolean, filePath: String?) { // filePath는 MapCapture.java 내부에서 생성된 파일명
+            override fun onCaptured(isSucceed: Boolean, filePath: String?) {
                 if (isSucceed && filePath != null) {
-                    // MapCapture.java는 이미지를 /DCIM/MapCaptureDemo/ 에 저장합니다.
-                    // filePath는 전체 경로가 아니라 파일 이름("MapCapture_xxx.png")만 반환합니다.
-                    // 따라서, 실제 저장된 전체 경로를 구성해야 합니다.
                     val dcimDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DCIM)
                     val captureDir = File(dcimDir, "MapCaptureDemo")
                     val imageFile = File(captureDir, filePath) // filePath가 파일명만 반환한다고 가정
@@ -69,17 +66,6 @@ class MapCaptureHelper {
                     Log.d(TAG, "Map captured by MapCapture.java. File: ${imageFile.absolutePath}")
 
                     if (imageFile.exists()) {
-                        // MapCapture.java가 이미 DCIM에 저장했으므로,
-                        // 추가로 MediaStore에 등록하여 갤러리에 바로 보이도록 할 수 있습니다.
-                        // 또는, 이 파일을 앱 내부 저장소로 복사 후 MediaStore에 저장할 수도 있습니다.
-                        // 여기서는 이미 저장된 파일을 기준으로 MediaStore에 정보만 추가하거나,
-                        // BitmapFactory로 읽어 다시 저장하는 방식을 사용할 수 있습니다.
-
-                        // 간단하게 하기 위해, 이미 저장된 파일을 대상으로 MediaStore에 등록하는 과정을 흉내내거나,
-                        // BitmapFactory로 읽어서 MediaStore에 다시 저장합니다.
-                        // 더 나은 방법은 MapCapture.java가 반환하는 Bitmap을 직접 받아 MediaStore에 저장하는 것입니다.
-                        // 현재 MapCapture.java는 파일 경로만 반환하고, 저장 로직까지 포함하고 있습니다.
-
                         val savedUri = saveImageToGalleryFromExistingFile(context, imageFile)
                         if (savedUri != null) {
                             Toast.makeText(context, "캡처 성공 및 갤러리 반영 완료", Toast.LENGTH_SHORT).show()
@@ -102,14 +88,7 @@ class MapCaptureHelper {
         })
     }
 
-    // MapCapture.java가 이미 파일을 저장한 경우, 해당 파일을 MediaStore에 등록하거나
-    // BitmapFactory로 읽어 다시 저장하여 갤러리에 표시되도록 하는 함수
     private fun saveImageToGalleryFromExistingFile(context: Context, imageFile: File): Uri? {
-        // 이미 파일이 DCIM에 있으므로, MediaScanner를 통해 갤러리에 보이게 할 수 있습니다.
-        // 하지만 MediaStore.Images.Media.insertImage() 를 사용하는 것이 좀 더 명시적일 수 있습니다.
-        // 여기서는 BitmapFactory로 읽어 MediaStore에 새로 저장하는 방식을 사용합니다.
-        // (MapCapture.java가 반환하는 fileName이 전체 경로가 아닌 파일명이라는 점에 유의)
-
         val bitmap = BitmapFactory.decodeFile(imageFile.absolutePath)
         if (bitmap == null) {
             Log.e(TAG, "Failed to decode bitmap from MapCapture.java's output: ${imageFile.absolutePath}")

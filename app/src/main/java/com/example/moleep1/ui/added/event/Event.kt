@@ -16,9 +16,4 @@ open class Event<out T>(private val content: T) {
             content
         }
     }
-
-    /**
-     * 처리 여부와 관계없이 content를 반환합니다.
-     */
-    fun peekContent(): T = content
 }

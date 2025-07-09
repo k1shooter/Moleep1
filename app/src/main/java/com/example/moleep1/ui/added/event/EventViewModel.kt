@@ -6,7 +6,6 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.moleep1.data.network.ApiClient
-import com.example.moleep1.data.network.DirectionsRequest
 import com.example.moleep1.data.network.DirectionsResponse
 import com.kakao.vectormap.LatLng
 import kotlinx.coroutines.launch
@@ -39,10 +38,6 @@ class EventViewModel(private val eventManager: EventManager) : ViewModel() {
         Log.d("ViewModelInit", "저장소에서 불러온 Event 개수: ${loadedList.size}")
 
     }
-
-    // ❗ [제거] performInitialLoad() 함수는 더 이상 사용하지 않으므로 삭제합니다.
-    // fun performInitialLoad(): Boolean { ... }
-
     fun findEventById(eventId: String): EventItem? {
         return _eventList.value?.find { it.eventId == eventId }
     }
@@ -94,26 +89,6 @@ class EventViewModel(private val eventManager: EventManager) : ViewModel() {
         _pinDeleted.value = Event(eventId)
     }
 
-    fun getMultiOriginDirections(request: DirectionsRequest) {
-        viewModelScope.launch {
-            try {
-                val response = ApiClient.service.getDirections(body = request)
-                if (response.isSuccessful) {
-                    response.body()?.let {
-                        _directionsResult.postValue(Event(it))
-                    }
-                } else {
-                    // TODO: API 호출 실패 처리 (예: Toast 메시지)
-                    Log.e("EventViewModel", "API Error: ${response.errorBody()?.string()}")
-                }
-            } catch (e: Exception) {
-                // TODO: 네트워크 에러 등 예외 처리
-                Log.e("EventViewModel", "API Exception", e)
-            }
-        }
-    }
-
-    // ❗ [추가] 여러 지점을 순회하며 길찾기 API를 호출하고 경로를 합치는 함수
     fun findRoutePathForEvents(events: List<EventItem>, personId: String) {
         if (events.size < 2) return
 

@@ -36,7 +36,6 @@ class PersonAdapter(
 
     inner class PersonViewHolder(private val binding: ItemPersonToggleBinding) : RecyclerView.ViewHolder(binding.root) {
         fun bind(person: list_item) {
-            // ❗ [수정] Java 클래스의 getter를 사용하여 데이터에 접근합니다.
             binding.tvPersonName.text = person.name // public 필드는 직접 접근 가능
 
             // Glide 라이브러리를 사용해 이미지 로드 (build.gradle에 추가 필요)
@@ -49,11 +48,9 @@ class PersonAdapter(
 
 
             binding.cbPersonSelected.setOnCheckedChangeListener(null)
-            // ❗ [수정] person.id 대신 person.getId() 사용
             binding.cbPersonSelected.isChecked = selectedIds.contains(person.id)
 
             binding.cbPersonSelected.setOnCheckedChangeListener { _, isChecked ->
-                // ❗ [수정] person.id 대신 person.getId() 사용
                 onPersonToggled(person.id, isChecked)
             }
 

@@ -20,7 +20,6 @@ class GalleryAdapter(
         val binding =
             ItemGalleryImageBinding.inflate(LayoutInflater.from(parent.context), parent, false)
 
-        // ✅ 2. ViewHolder가 생성될 때 클릭 리스너를 설정
         val viewHolder = GalleryViewHolder(binding)
         viewHolder.itemView.setOnClickListener {
             val position = viewHolder.adapterPosition
