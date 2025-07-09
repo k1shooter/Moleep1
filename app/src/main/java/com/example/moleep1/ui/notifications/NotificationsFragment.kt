@@ -34,6 +34,7 @@ import androidx.core.content.ContextCompat
 import com.example.moleep1.ui.PrefsManager
 import com.example.moleep1.ui.home.HomeViewModelFactory
 import android.os.Build
+import androidx.annotation.RequiresApi
 
 class NotificationsFragment : Fragment() {
 
@@ -45,6 +46,7 @@ class NotificationsFragment : Fragment() {
 
     private val viewModel: NotificationsViewModel by activityViewModels()
 
+    @RequiresApi(Build.VERSION_CODES.TIRAMISU)
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         val drawerLayout=view.findViewById<DrawerLayout>(R.id.drawerLayout)
         val btnOpenSidebar=view.findViewById<ImageButton>(R.id.btnOpenSidebar)
@@ -74,28 +76,14 @@ class NotificationsFragment : Fragment() {
             // 1. 권한 체크
 
 
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                if (ContextCompat.checkSelfPermission(requireContext(), Manifest.permission.READ_MEDIA_IMAGES)
-                    != PackageManager.PERMISSION_GRANTED) {
-                    ActivityCompat.requestPermissions(
-                        requireActivity(),
-                        arrayOf(Manifest.permission.READ_MEDIA_IMAGES),
-                        1002
-                    )
-                    return@setOnClickListener
-                }
-            }
-            else{
-                if (ContextCompat.checkSelfPermission(requireContext(), Manifest.permission.WRITE_EXTERNAL_STORAGE)
-                    != PackageManager.PERMISSION_GRANTED) {
-                    // 2. 권한이 없으면 요청
-                    ActivityCompat.requestPermissions(
-                        requireActivity(),
-                        arrayOf(Manifest.permission.WRITE_EXTERNAL_STORAGE),
-                        1001
-                    )
-                    return@setOnClickListener // 권한 허용 후 다시 시도하도록 종료
-                }
+            if (ContextCompat.checkSelfPermission(requireContext(), Manifest.permission.READ_MEDIA_IMAGES)
+                != PackageManager.PERMISSION_GRANTED) {
+                ActivityCompat.requestPermissions(
+                    requireActivity(),
+                    arrayOf(Manifest.permission.READ_MEDIA_IMAGES),
+                    1002
+                )
+                return@setOnClickListener
             }
 
             // 3. 권한이 있을 때만 저장 코드 실행
