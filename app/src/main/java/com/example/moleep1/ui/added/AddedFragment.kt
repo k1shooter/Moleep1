@@ -12,7 +12,6 @@ import com.example.moleep1.databinding.FragmentAddedBinding
 import com.example.moleep1.ui.added.event.*
 import com.example.moleep1.ui.home.HomeViewModel
 import com.kakao.vectormap.*
-import com.kakao.vectormap.label.Label
 import com.example.moleep1.R
 
 class AddedFragment : Fragment() {
@@ -32,6 +31,8 @@ class AddedFragment : Fragment() {
     }
     private val homeViewModel: HomeViewModel by activityViewModels()
 
+    private val selectedPeopleForPath = mutableSetOf<String>()
+
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
         _binding = FragmentAddedBinding.inflate(inflater, container, false)
         locationHandler = LocationHandler(this)
@@ -47,14 +48,21 @@ class AddedFragment : Fragment() {
     }
 
     private fun setupPathUI() {
-        pathPersonAdapter = PathPersonAdapter { person ->
-            val events = viewModel.getEventsForAttendee(person.id)
-            if (events.size < 2) {
-                Toast.makeText(requireContext(), "경로를 만들기에 사건 수가 부족합니다.", Toast.LENGTH_SHORT).show()
-                return@PathPersonAdapter
+        // ❗ [수정] PathPersonAdapter의 타입 오류를 해결합니다.
+        pathPersonAdapter = PathPersonAdapter { personId, isSelected ->
+            if (isSelected) {
+                selectedPeopleForPath.add(personId)
+                val events = viewModel.getEventsForAttendee(personId)
+                if (events.size < 2) {
+                    Toast.makeText(requireContext(), "경로를 만들기에 사건 수가 부족합니다.", Toast.LENGTH_SHORT).show()
+                } else {
+                    // ❗ [수정] ViewModel 호출 시 personId를 함께 전달합니다.
+                    viewModel.findRoutePathForEvents(events, personId)
+                }
+            } else {
+                selectedPeopleForPath.remove(personId)
+                mapPinManager?.removePathForPerson(personId)
             }
-            viewModel.findRoutePathForEvents(events)
-            binding.cardViewPersonList.visibility = View.GONE
         }
         binding.rvPathPersonList.adapter = pathPersonAdapter
     }
@@ -66,7 +74,7 @@ class AddedFragment : Fragment() {
             locationHandler.requestCurrentLocation(
                 onSuccess = { latLng ->
                     binding.progressBar.visibility = View.GONE
-                    mapPinManager?.moveCamera(latLng)
+                    mapPinManager?.moveCamera(latLng, 15)
                 },
                 onFailure = { binding.progressBar.visibility = View.GONE }
             )
@@ -87,19 +95,7 @@ class AddedFragment : Fragment() {
             }
         }
         // 동선 버튼
-        binding.btnPath.setOnClickListener {
-            isPathModeActive = !isPathModeActive // 모드 전환
-            if (isPathModeActive) {
-                binding.btnPath.setIconResource(android.R.drawable.ic_delete) // "x" 아이콘 (임시)
-                // HomeViewModel의 전체 인물 목록을 가져와 어댑터에 설정
-                pathPersonAdapter.submitList(homeViewModel.itemList.value ?: emptyList())
-                binding.cardViewPersonList.visibility = View.VISIBLE // 인물 리스트 보이기
-            } else {
-                binding.btnPath.setIconResource(R.drawable.route) // 원래 이미지로 변경
-                binding.cardViewPersonList.visibility = View.GONE // 인물 리스트 숨기기
-                mapPinManager?.clearAllPaths() // 모든 동선 지우기
-            }
-        }
+        binding.btnPath.setOnClickListener { togglePathMode() }
     }
 
     // ViewModel의 LiveData를 관찰하여 UI를 업데이트하는 로직
@@ -120,13 +116,9 @@ class AddedFragment : Fragment() {
             }
         }
         viewModel.routePath.observe(viewLifecycleOwner) { event ->
-            event.getContentIfNotHandled()?.let { path ->
-                // 1. 먼저 기존 경로를 지움
-                mapPinManager?.clearAllPaths()
-                // 2. 새로운 RouteLine을 그림
-                mapPinManager?.drawRouteLine(path)
-                // 3. 그려진 RouteLine에 애니메이션 효과 적용
-                mapPinManager?.animatePath()
+            event.getContentIfNotHandled()?.let { (personId, path) ->
+                mapPinManager?.drawPathForPerson(personId, path)
+                mapPinManager?.animatePathForPerson(personId)
             }
         }
     }
@@ -187,6 +179,20 @@ class AddedFragment : Fragment() {
         } else {
             // 비활성화 상태: 원래 '핀' 아이콘
             binding.btnAddPinMode.setIconResource(R.drawable.outline_add_location_24) // 실제 사용하는 핀 아이콘으로 변경하세요.
+        }
+    }
+
+    private fun togglePathMode() {
+        isPathModeActive = !isPathModeActive
+        if (isPathModeActive) {
+            binding.btnPath.setIconResource(android.R.drawable.ic_menu_close_clear_cancel)
+            pathPersonAdapter.submitList(homeViewModel.itemList.value ?: emptyList(), selectedPeopleForPath)
+            binding.cardViewPersonList.visibility = View.VISIBLE
+        } else {
+            binding.btnPath.setIconResource(R.drawable.route)
+            binding.cardViewPersonList.visibility = View.GONE
+            mapPinManager?.clearAllPaths() // 모든 동선 지우기
+            selectedPeopleForPath.clear() // 선택 상태 초기화
         }
     }
 
