@@ -44,13 +44,8 @@ class EventDetailBottomSheet : BottomSheetDialogFragment() {
         EventViewModelFactory(EventManager(requireContext()))
     }
 
-    private var isSaved = false // 저장 버튼 클릭 여부 추적
-
     private var eventId: String? = null
     private var pinLatLng: LatLng? = null // 핀의 좌표
-
-    private var selectedPhotoUri: Uri? = null
-    private var selectedPhotoPath: String? = null
 
     private var tempSelectedUri: Uri? = null
     private var currentPhotoPath: String? = null

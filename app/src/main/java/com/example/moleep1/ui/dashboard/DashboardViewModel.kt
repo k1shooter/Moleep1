@@ -10,12 +10,10 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import com.example.moleep1.R
 
-// ❗ Application을 상속받아 Context를 안전하게 사용
 class DashboardViewModel(application: Application) : AndroidViewModel(application) {
 
     private val prefsManager = DashboardPrefsManager(application)
 
-    // ❗ ViewModel 생성 시 SharedPreferences에서 데이터 불러오기
     private val _imageList = MutableLiveData<MutableList<Uri>>().apply {
         value = prefsManager.loadUriList()
     }
@@ -47,7 +45,7 @@ class DashboardViewModel(application: Application) : AndroidViewModel(applicatio
 
     // 리스트에 이미지 추가
     fun addImage(uri: Uri) {
-        // ❗ 영구적인 읽기 권한 획득 (매우 중요)
+        // 영구적인 읽기 권한 획득
         try {
             getApplication<Application>().contentResolver.takePersistableUriPermission(
                 uri,
@@ -61,14 +59,12 @@ class DashboardViewModel(application: Application) : AndroidViewModel(applicatio
         list.add(uri)
         _imageList.value = list
 
-        // ❗ 목록 변경 시 SharedPreferences에 저장
         prefsManager.saveUriList(list)
     }
 
     // 전체 리스트 교체
     fun setList(newList: List<Uri>) {
         _imageList.value = newList.toMutableList()
-        // ❗ 목록 변경 시 SharedPreferences에 저장
         prefsManager.saveUriList(newList)
     }
 }

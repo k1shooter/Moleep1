@@ -6,7 +6,7 @@ import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import com.example.moleep1.R
-import com.example.moleep1.databinding.ItemPersonToggleBinding // 재사용할 레이아웃의 바인딩
+import com.example.moleep1.databinding.ItemPersonToggleBinding
 import com.example.moleep1.list_item
 
 class PathPersonAdapter(

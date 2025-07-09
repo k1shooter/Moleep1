@@ -14,6 +14,7 @@ import com.kakao.vectormap.route.*
 import com.kakao.vectormap.route.animation.*
 import java.io.File
 import androidx.core.graphics.toColorInt
+import com.example.moleep1.ui.added.event.DurationLabelInfo
 import kotlin.math.abs
 
 
@@ -39,6 +40,8 @@ class MapPinManager(private val context: Context, private val kakaoMap: KakaoMap
         Color.RED, Color.BLUE, Color.GREEN, Color.CYAN, Color.MAGENTA,
         Color.YELLOW, "#FFA500".toColorInt() // Orange
     )
+
+    private val durationLabels = mutableListOf<Label>()
 
     init {
         setupMapListeners()
@@ -121,7 +124,6 @@ class MapPinManager(private val context: Context, private val kakaoMap: KakaoMap
         if (path.size < 2) return
         removePathForPerson(personId)
 
-        // ❗ [추가] personId를 기반으로 일관된 랜덤 색상을 선택
         val colorIndex = abs(personId.hashCode()) % pathColors.size
         val randomColor = pathColors[colorIndex]
 
@@ -132,7 +134,6 @@ class MapPinManager(private val context: Context, private val kakaoMap: KakaoMap
         }
 
         val pattern = RouteLinePattern.from(arrowBitmap, 60f)
-        // ❗ [수정] 라인 색상을 위에서 선택한 randomColor로 설정
         val style = RouteLineStyle.from(10f, randomColor).setPattern(pattern)
         val stylesSet = RouteLineStylesSet.from("path_style_$personId", RouteLineStyles.from(style))
         val segment = RouteLineSegment.from(path).setStyles(stylesSet.getStyles(0))
@@ -144,12 +145,9 @@ class MapPinManager(private val context: Context, private val kakaoMap: KakaoMap
     }
 
     fun animatePathForPerson(personId: String) {
-        // activeRouteLines 맵에서 personId에 해당하는 RouteLine을 찾음
         activeRouteLines[personId]?.let { line ->
-            // ❗ [핵심] 애니메이션 시작 전, 라인을 보이지 않는 상태(-1.0)로 설정
             line.setProgress(-1.0f)
 
-            // --- 아래는 사용자님이 작성하신 RouteLineAnimator 코드입니다 ---
             val animation = ProgressAnimation.from(personId, 1500)
             animation.setInterpolation(Interpolation.Linear)
             animation.progressType = ProgressType.ToShow
@@ -171,6 +169,38 @@ class MapPinManager(private val context: Context, private val kakaoMap: KakaoMap
     fun clearAllPaths() {
         activeRouteLines.values.forEach { it.remove() }
         activeRouteLines.clear()
+        clearAllDurationLabels() // 시간 텍스트도 함께 삭제
+    }
+
+    // --- 경로 시간 표시 함수 ---
+
+    fun getActivePathPersonIds(): Set<String> {
+        return activeRouteLines.keys
+    }
+
+    fun drawDurationLabels(labelsInfo: List<DurationLabelInfo>) {
+        clearAllDurationLabels()
+        labelsInfo.forEach { info ->
+            val textColor = if (info.isAnomalous) Color.RED else Color.WHITE
+            val strokeColor = info.pathColor
+
+            val textStyle = LabelTextStyle.from(35, textColor, 2, strokeColor)
+            val labelStyle = LabelStyle.from(textStyle)
+            val styles = LabelStyles.from(labelStyle)
+
+            val options = LabelOptions.from(info.position)
+                .setStyles(styles)
+                .setTexts(LabelTextBuilder().setTexts(info.text))
+
+            kakaoMap.labelManager?.layer?.addLabel(options)?.let {
+                durationLabels.add(it)
+            }
+        }
+    }
+
+    fun clearAllDurationLabels() {
+        durationLabels.forEach { it.remove() }
+        durationLabels.clear()
     }
 
     // --- 카메라 및 위치 저장 함수 ---

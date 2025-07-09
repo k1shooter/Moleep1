@@ -48,7 +48,6 @@ class AddedFragment : Fragment() {
     }
 
     private fun setupPathUI() {
-        // ❗ [수정] PathPersonAdapter의 타입 오류를 해결합니다.
         pathPersonAdapter = PathPersonAdapter { personId, isSelected ->
             if (isSelected) {
                 selectedPeopleForPath.add(personId)
@@ -56,7 +55,6 @@ class AddedFragment : Fragment() {
                 if (events.size < 2) {
                     Toast.makeText(requireContext(), "경로를 만들기에 사건 수가 부족합니다.", Toast.LENGTH_SHORT).show()
                 } else {
-                    // ❗ [수정] ViewModel 호출 시 personId를 함께 전달합니다.
                     viewModel.findRoutePathForEvents(events, personId)
                 }
             } else {
@@ -96,6 +94,15 @@ class AddedFragment : Fragment() {
         }
         // 동선 버튼
         binding.btnPath.setOnClickListener { togglePathMode() }
+        // 시간 계산 버튼
+        binding.btnCalculateTime.setOnClickListener {
+            val activeIds = mapPinManager?.getActivePathPersonIds()
+            if (activeIds.isNullOrEmpty()) {
+                Toast.makeText(requireContext(), "먼저 동선을 표시해주세요.", Toast.LENGTH_SHORT).show()
+            } else {
+                viewModel.calculateDurationsForActivePaths(activeIds)
+            }
+        }
     }
 
     // ViewModel의 LiveData를 관찰하여 UI를 업데이트하는 로직
@@ -119,6 +126,11 @@ class AddedFragment : Fragment() {
             event.getContentIfNotHandled()?.let { (personId, path) ->
                 mapPinManager?.drawPathForPerson(personId, path)
                 mapPinManager?.animatePathForPerson(personId)
+            }
+        }
+        viewModel.durationLabels.observe(viewLifecycleOwner) { event ->
+            event.getContentIfNotHandled()?.let { labelsInfo ->
+                mapPinManager?.drawDurationLabels(labelsInfo)
             }
         }
     }
