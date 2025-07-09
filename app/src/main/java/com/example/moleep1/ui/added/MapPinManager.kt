@@ -7,8 +7,13 @@ import android.util.Log
 import com.example.moleep1.R
 import com.example.moleep1.ui.added.event.*
 import com.kakao.vectormap.*
+import com.kakao.vectormap.animation.Interpolation
 import com.kakao.vectormap.camera.CameraUpdateFactory
 import com.kakao.vectormap.label.*
+import com.kakao.vectormap.route.*
+import com.kakao.vectormap.route.animation.ProgressAnimation
+import com.kakao.vectormap.route.animation.ProgressDirection
+import com.kakao.vectormap.route.animation.ProgressType
 import com.kakao.vectormap.shape.MapPoints
 import com.kakao.vectormap.shape.Polyline
 import com.kakao.vectormap.shape.PolylineOptions
@@ -26,6 +31,10 @@ class MapPinManager(private val context: Context, private val kakaoMap: KakaoMap
     var onPinClickListener: ((Label, String) -> Unit)? = null
 
     private val polylines = mutableListOf<Polyline>()
+
+    private val routeLineManager: RouteLineManager = kakaoMap.routeLineManager!!
+    private val routeLineLayer = routeLineManager.layer
+    private var currentRouteLine: RouteLine? = null
 
     private val pinStyle = kakaoMap.labelManager!!.addLabelStyles(
         LabelStyles.from(LabelStyle.from(R.drawable.pin_icon_128))
@@ -147,9 +156,46 @@ class MapPinManager(private val context: Context, private val kakaoMap: KakaoMap
         }
     }
 
+    fun drawRouteLine(path: List<LatLng>) {
+        if (path.isEmpty()) return
+        clearAllPaths()
+
+        val arrowBitmap = ImageUtils.drawableToBitmap(context, R.drawable.route_pattern_arrow)
+        if (arrowBitmap == null) {
+            Log.e("MapPinManager", "화살표 패턴 비트맵 생성 실패")
+            return
+        }
+
+        val pattern = RouteLinePattern.from(arrowBitmap, 60f)
+        val style = RouteLineStyle.from(10f, Color.RED).setPattern(pattern) // 두께 10, 빨간색
+        val stylesSet = RouteLineStylesSet.from("path_style", RouteLineStyles.from(style))
+        val segment = RouteLineSegment.from(path).setStyles(stylesSet.getStyles(0))
+        val options = RouteLineOptions.from(segment).setStylesSet(stylesSet)
+        currentRouteLine = routeLineLayer.addRouteLine(options)
+    }
+
+    fun animatePath() {
+        currentRouteLine?.let { line ->
+            // 1. 애니메이션 설정값 생성
+            val animation = ProgressAnimation.from("path_anim", 1500) // 1.5초
+            animation.setInterpolation(Interpolation.CubicInOut) // 선형 보간
+            animation.progressType = ProgressType.ToShow // 라인이 나타나도록 설정
+            animation.progressDirection = ProgressDirection.StartFirst // 시작점부터 애니메이션
+            animation.isHideAtStop = false // 애니메이션이 멈췄을 때 라인을 숨기지 않음 (계속 보임)
+            animation.isResetToInitialState = false // 멈췄을 때 처음 상태로 돌아가지 않음
+
+            // 2. RouteLineAnimator 생성
+            val animator = routeLineManager.addAnimator(animation)
+
+            // 3. RouteLine을 추가하고 애니메이션 시작
+            animator.addRouteLines(line)
+            animator.start(null) // 콜백이 필요 없으면 null 전달
+        }
+    }
+
     fun clearAllPaths() {
-        polylines.forEach { it.remove() }
-        polylines.clear()
+        currentRouteLine?.remove()
+        currentRouteLine = null
     }
 
     fun moveCamera(position: LatLng, zoomLevel: Int = 15) {

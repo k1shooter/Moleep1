@@ -11,8 +11,9 @@
 
     <com.google.android.material.imageview.ShapeableImageView
         android:id="@+id/iv_person_photo_simple"
-        android:layout_width="40dp"
-        android:layout_height="40dp"
+        android:layout_width="50dp"
+        android:layout_height="50dp"
+        android:scaleType="centerCrop"
         app:shapeAppearanceOverlay="@style/ShapeAppearance.Material3.Corner.Full"
         tools:src="@tools:sample/avatars" />
 
@@ -23,5 +24,6 @@
         android:layout_marginStart="12dp"
         android:textAppearance="?attr/textAppearanceBodyMedium"
         android:textColor="?attr/colorOnSurface"
-        tools:text="인물 이름" />
+        tools:text="인물 이름"
+        android:textSize="20sp"/>
 </LinearLayout>

@@ -10,6 +10,12 @@ import android.provider.MediaStore
 import java.io.File
 import java.io.FileOutputStream
 import java.util.UUID
+import android.graphics.Bitmap
+import android.graphics.Canvas
+import android.graphics.drawable.BitmapDrawable
+import android.graphics.drawable.Drawable
+import androidx.core.content.ContextCompat
+import androidx.core.graphics.createBitmap
 
 object ImageUtils {
 
@@ -72,5 +78,17 @@ object ImageUtils {
             e.printStackTrace()
             null
         }
+    }
+    fun drawableToBitmap(context: Context, drawableResId: Int): Bitmap? {
+        val drawable: Drawable = ContextCompat.getDrawable(context, drawableResId) ?: return null
+        if (drawable is BitmapDrawable) {
+            return drawable.bitmap
+        }
+
+        val bitmap = createBitmap(drawable.intrinsicWidth, drawable.intrinsicHeight)
+        val canvas = Canvas(bitmap)
+        drawable.setBounds(0, 0, canvas.width, canvas.height)
+        drawable.draw(canvas)
+        return bitmap
     }
 }

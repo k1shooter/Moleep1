@@ -25,7 +25,7 @@
         android:layout_marginStart="16dp"
         android:textAppearance="?attr/textAppearanceBodyLarge"
         tools:text="인물 이름"
-        android:textSize="16sp" /> <CheckBox
+        android:textSize="20sp" /> <CheckBox
     android:id="@+id/cb_person_selected"
     android:layout_width="wrap_content"
     android:layout_height="wrap_content"

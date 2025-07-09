@@ -13,6 +13,7 @@ import com.example.moleep1.ui.added.event.*
 import com.example.moleep1.ui.home.HomeViewModel
 import com.kakao.vectormap.*
 import com.kakao.vectormap.label.Label
+import com.example.moleep1.R
 
 class AddedFragment : Fragment() {
 
@@ -90,12 +91,12 @@ class AddedFragment : Fragment() {
         binding.btnPath.setOnClickListener {
             isPathModeActive = !isPathModeActive // 모드 전환
             if (isPathModeActive) {
-                binding.btnPath.text = "취소"
+                binding.btnPath.setIconResource(android.R.drawable.ic_delete) // "x" 아이콘 (임시)
                 // HomeViewModel의 전체 인물 목록을 가져와 어댑터에 설정
                 pathPersonAdapter.submitList(homeViewModel.itemList.value ?: emptyList())
                 binding.cardViewPersonList.visibility = View.VISIBLE // 인물 리스트 보이기
             } else {
-                binding.btnPath.text = "동선"
+                binding.btnPath.setIconResource(R.drawable.route) // 원래 이미지로 변경
                 binding.cardViewPersonList.visibility = View.GONE // 인물 리스트 숨기기
                 mapPinManager?.clearAllPaths() // 모든 동선 지우기
             }
@@ -134,8 +135,12 @@ class AddedFragment : Fragment() {
         }
         viewModel.routePath.observe(viewLifecycleOwner) { event ->
             event.getContentIfNotHandled()?.let { path ->
+                // 1. 먼저 기존 경로를 지움
                 mapPinManager?.clearAllPaths()
-                mapPinManager?.drawPath(path)
+                // 2. 새로운 RouteLine을 그림
+                mapPinManager?.drawRouteLine(path)
+                // 3. 그려진 RouteLine에 애니메이션 효과 적용
+                mapPinManager?.animatePath()
             }
         }
     }

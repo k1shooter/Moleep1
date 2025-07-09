@@ -18,11 +18,6 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-
-
-        val keyHash = Utility.getKeyHash(this)
-        Log.d("KakaoKeyHash", "내 디버그 키 해시: $keyHash")
-
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
