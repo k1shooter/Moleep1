@@ -1,9 +1,9 @@
 package com.example.moleep1.ui
+import android.content.ContentValues
 import android.util.AttributeSet
 import android.content.Context
+import android.content.Intent
 import android.graphics.Bitmap
-import android.graphics.BitmapFactory
-import android.graphics.BitmapShader
 import android.view.View
 import android.graphics.Canvas
 import android.graphics.Color
@@ -18,16 +18,15 @@ import com.bumptech.glide.Glide
 import com.bumptech.glide.request.target.CustomTarget
 import com.bumptech.glide.request.transition.Transition
 import android.graphics.ImageDecoder
-import android.graphics.Shader
 import android.net.Uri
 import android.os.Build
+import android.os.Environment
 import android.provider.MediaStore
 import com.example.moleep1.ui.notifications.PlacedText
+
+import com.example.moleep1.ui.notifications.PlacedGallery
 import java.io.File
 import java.io.FileOutputStream
-import java.io.IOException
-import com.example.moleep1.R
-import com.example.moleep1.ui.notifications.PlacedGallery
 
 class DrawingView(context: Context, attrs: AttributeSet?) : View(context,attrs) {
 
@@ -69,14 +68,38 @@ class DrawingView(context: Context, attrs: AttributeSet?) : View(context,attrs) 
     }
 
     fun saveBitmapToGallery(context: Context, bitmap: Bitmap, title: String): Boolean {
-        @Suppress("DEPRECATION")
-        val savedImageURL = MediaStore.Images.Media.insertImage(
-            context.contentResolver,
-            bitmap,
-            title,
-            "그림판에서 저장한 이미지"
-        )
-        return savedImageURL != null
+        return try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                // Android 10 이상: MediaStore 사용
+                val contentValues = ContentValues().apply {
+                    put(MediaStore.Images.Media.DISPLAY_NAME, "$title.png")
+                    put(MediaStore.Images.Media.MIME_TYPE, "image/png")
+                    put(MediaStore.Images.Media.RELATIVE_PATH, "Pictures/MyApp")
+                }
+                val resolver = context.contentResolver
+                val uri = resolver.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, contentValues)
+                uri?.let {
+                    resolver.openOutputStream(it)?.use { out ->
+                        bitmap.compress(Bitmap.CompressFormat.PNG, 100, out)
+                    }
+                } ?: throw Exception("MediaStore insert 실패")
+            } else {
+                // Android 9 이하: 직접 파일로 저장
+                val picturesDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES)
+                val appDir = File(picturesDir, "MyApp")
+                if (!appDir.exists()) appDir.mkdirs()
+                val file = File(appDir, "$title.png")
+                FileOutputStream(file).use { out ->
+                    bitmap.compress(Bitmap.CompressFormat.PNG, 100, out)
+                }
+                // 미디어 스캔(갤러리 반영)
+                context.sendBroadcast(Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE, Uri.fromFile(file)))
+            }
+            true // 성공
+        } catch (e: Exception) {
+            e.printStackTrace()
+            false // 실패
+        }
     }
 
     // 패닝/줌 값이 바뀔 때 호출
@@ -234,15 +257,6 @@ class DrawingView(context: Context, attrs: AttributeSet?) : View(context,attrs) 
             val h = img.height.coerceAtLeast(10)
             val scaledBitmap = Bitmap.createScaledBitmap(img.bitmap, w, h, true)
             canvas.drawBitmap(scaledBitmap, img.x, img.y, null)
-            // 선택된 이미지는 테두리 표시
-//            if (i == selectedImageIndex) {
-//                val paint = Paint().apply {
-//                    color = Color.RED
-//                    style = Paint.Style.STROKE
-//                    strokeWidth = 5f
-//                }
-//                canvas.drawRect(img.x, img.y, img.x + img.width, img.y + img.height, paint)
-//            }
         }
 
         for ((i, img) in placedImages.withIndex()) {
