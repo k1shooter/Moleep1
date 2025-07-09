@@ -25,6 +25,7 @@ class AddedFragment : Fragment() {
     private lateinit var locationHandler: LocationHandler
     private lateinit var pathPersonAdapter: PathPersonAdapter
     private var isPathModeActive = false
+    private var isPinAddModeActive = false
 
     private val viewModel: EventViewModel by activityViewModels {
         EventViewModelFactory(EventManager(requireContext()))
@@ -72,13 +73,11 @@ class AddedFragment : Fragment() {
         }
         // 핀 추가 모드 버튼
         binding.btnAddPinMode.setOnClickListener {
-            val isEnteringPinMode = (binding.btnAddPinMode.text == "pin")
-            mapPinManager?.setPinAddMode(isEnteringPinMode)
-            binding.btnAddPinMode.text = if (isEnteringPinMode) {
+            // 현재 상태의 반대 상태로 변경하고 UI를 업데이트합니다.
+            updatePinAddModeUI(!isPinAddModeActive)
+
+            if (isPinAddModeActive) {
                 Toast.makeText(requireContext(), "핀을 추가할 위치를 지도에서 선택하세요.", Toast.LENGTH_SHORT).show()
-                "Cancel"
-            } else {
-                "pin"
             }
         }
         // 캡처 버튼
@@ -105,19 +104,6 @@ class AddedFragment : Fragment() {
 
     // ViewModel의 LiveData를 관찰하여 UI를 업데이트하는 로직
     private fun setupViewModelObservers() {
-        // ❗ [수정] "데이터 준비 완료" 신호를 받으면, 단 한 번만 전체 핀을 그립니다.
-        viewModel.isDataReady.observe(viewLifecycleOwner) { event ->
-            event.getContentIfNotHandled()?.let { isReady ->
-                if (isReady) {
-                    val events = viewModel.eventList.value
-                    Log.d("InitialLoad", "데이터 준비 완료, ${events?.size ?: 0}개의 핀을 그립니다.")
-                    mapPinManager?.clearAllPins()
-                    events?.forEach { mapPinManager?.addPinFromData(it) }
-                }
-            }
-        }
-
-        // --- 개별 업데이트/추가/삭제 Observer는 그대로 유지 ---
         viewModel.newPinAdded.observe(viewLifecycleOwner) { event ->
             event.getContentIfNotHandled()?.let { newEvent ->
                 mapPinManager?.addPinFromData(newEvent)
@@ -154,11 +140,21 @@ class AddedFragment : Fragment() {
     private val mapReadyCallback = object : KakaoMapReadyCallback() {
         override fun onMapReady(kakaoMap: KakaoMap) {
             initializeMapManager(kakaoMap)
-            // ❗ [수정] 지도가 준비된 후에 Observer 설정을 호출합니다.
             setupViewModelObservers()
-
+            drawInitialPins()
             if (mapPinManager?.loadLastLocation() == false) {
                 binding.fabCurrentLocation.performClick()
+            }
+        }
+    }
+
+    private fun drawInitialPins() {
+        val currentEvents = viewModel.eventList.value
+        if (!currentEvents.isNullOrEmpty()) {
+            Log.d("InitialDraw", "초기 핀 ${currentEvents.size}개를 그립니다.")
+            mapPinManager?.clearAllPins()
+            currentEvents.forEach { event ->
+                mapPinManager?.addPinFromData(event)
             }
         }
     }
@@ -166,7 +162,7 @@ class AddedFragment : Fragment() {
     private fun initializeMapManager(kakaoMap: KakaoMap) {
         mapPinManager = MapPinManager(requireContext(), kakaoMap).apply {
             onMapTappedListener = { latLng ->
-                binding.btnAddPinMode.text = "pin"
+                updatePinAddModeUI(false)
                 showEventDetailSheet(latLng)
             }
             onPinClickListener = { clickedLabel, eventId ->
@@ -179,6 +175,19 @@ class AddedFragment : Fragment() {
         if (childFragmentManager.findFragmentByTag(EventDetailBottomSheet.TAG) != null) return
         EventDetailBottomSheet.newInstance(latLng, eventId)
             .show(childFragmentManager, EventDetailBottomSheet.TAG)
+    }
+
+    private fun updatePinAddModeUI(isActive: Boolean) {
+        isPinAddModeActive = isActive
+        mapPinManager?.setPinAddMode(isActive)
+
+        if (isActive) {
+            // 활성화 상태: 'X' 아이콘
+            binding.btnAddPinMode.setIconResource(android.R.drawable.ic_menu_close_clear_cancel)
+        } else {
+            // 비활성화 상태: 원래 '핀' 아이콘
+            binding.btnAddPinMode.setIconResource(R.drawable.outline_add_location_24) // 실제 사용하는 핀 아이콘으로 변경하세요.
+        }
     }
 
     // --- Fragment 생명주기 마무리 ---

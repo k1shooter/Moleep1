@@ -167,7 +167,7 @@ class MapPinManager(private val context: Context, private val kakaoMap: KakaoMap
         }
 
         val pattern = RouteLinePattern.from(arrowBitmap, 60f)
-        val style = RouteLineStyle.from(10f, Color.RED).setPattern(pattern) // 두께 10, 빨간색
+        val style = RouteLineStyle.from(12f, Color.BLUE).setPattern(pattern) // 두께 10, 빨간색
         val stylesSet = RouteLineStylesSet.from("path_style", RouteLineStyles.from(style))
         val segment = RouteLineSegment.from(path).setStyles(stylesSet.getStyles(0))
         val options = RouteLineOptions.from(segment).setStylesSet(stylesSet)
@@ -178,7 +178,7 @@ class MapPinManager(private val context: Context, private val kakaoMap: KakaoMap
         currentRouteLine?.let { line ->
             // 1. 애니메이션 설정값 생성
             val animation = ProgressAnimation.from("path_anim", 1500) // 1.5초
-            animation.setInterpolation(Interpolation.CubicInOut) // 선형 보간
+            animation.setInterpolation(Interpolation.Linear) // 선형 보간
             animation.progressType = ProgressType.ToShow // 라인이 나타나도록 설정
             animation.progressDirection = ProgressDirection.StartFirst // 시작점부터 애니메이션
             animation.isHideAtStop = false // 애니메이션이 멈췄을 때 라인을 숨기지 않음 (계속 보임)

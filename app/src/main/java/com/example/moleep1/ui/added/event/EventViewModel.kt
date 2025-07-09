@@ -32,18 +32,12 @@ class EventViewModel(private val eventManager: EventManager) : ViewModel() {
     private val _routePath = MutableLiveData<Event<List<LatLng>>>()
     val routePath: LiveData<Event<List<LatLng>>> = _routePath
 
-    // ❗ [추가] 초기 데이터 로드가 완료되었음을 알리는 LiveData
-    private val _isDataReady = MutableLiveData<Event<Boolean>>()
-    val isDataReady: LiveData<Event<Boolean>> = _isDataReady
-
     init {
         // ViewModel이 생성될 때 저장소에서 데이터를 불러옴
         val loadedList = eventManager.loadEventList()
         _eventList.value = loadedList
         Log.d("ViewModelInit", "저장소에서 불러온 Event 개수: ${loadedList.size}")
 
-        // ❗ [추가] 데이터 로드가 끝났다는 신호를 보냄
-        _isDataReady.value = Event(true)
     }
 
     // ❗ [제거] performInitialLoad() 함수는 더 이상 사용하지 않으므로 삭제합니다.
